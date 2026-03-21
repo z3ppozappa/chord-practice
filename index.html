@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chord Tone Finder</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <header id="settings">
+      <div class="settings-row">
+        <label>Scale
+          <select id="scale-select">
+            <option value="major">Major</option>
+            <option value="harmonicMinor">Harmonic Minor</option>
+            <option value="pentatonic">Pentatonic</option>
+            <option value="random">Random</option>
+          </select>
+        </label>
+        <label>Mode
+          <select id="mode-select">
+            <option value="random">Random</option>
+          </select>
+        </label>
+        <label>Strings
+          <select id="string-preset">
+            <option value="all">All</option>
+            <option value="high">High (e, B, G)</option>
+            <option value="middle">Middle (B, G, D)</option>
+            <option value="low">Low (D, A, E)</option>
+            <option value="custom">Custom</option>
+          </select>
+        </label>
+      </div>
+      <div class="settings-row">
+        <label><input type="checkbox" id="show-mode" checked> Show mode name</label>
+        <label><input type="checkbox" id="show-chord" checked> Show chord name</label>
+        <div id="custom-strings" class="hidden"></div>
+      </div>
+    </header>
+
+    <main id="game">
+      <div id="prompt">
+        <span id="mode-name"></span>
+        <div id="find-prompt"></div>
+        <span id="chord-info"></span>
+      </div>
+
+      <div id="fretboard-container"></div>
+
+      <div id="progress"></div>
+
+      <div id="stats">
+        <div class="stat">
+          <span class="stat-label">Score</span>
+          <span class="stat-value" id="score">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Streak</span>
+          <span class="stat-value" id="streak">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Round</span>
+          <span class="stat-value" id="round-num">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Round</span>
+          <span class="stat-value" id="round-timer">0:00</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Session</span>
+          <span class="stat-value" id="session-timer">0:00</span>
+        </div>
+      </div>
+
+      <button id="next-btn" class="hidden">Next Round (Space)</button>
+    </main>
+  </div>
+
+  <script src="js/scales.js"></script>
+  <script src="js/fretboard.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

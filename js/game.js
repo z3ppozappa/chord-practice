@@ -1,0 +1,253 @@
+// Game logic, state management, scoring, timer
+
+const state = {
+  // Settings
+  scaleKey: 'major',
+  modeIndex: null, // null = random
+  activeStrings: [true, true, true, true, true, true],
+  showModeName: true,
+  showChordName: true,
+
+  // Current round
+  currentScale: null,
+  currentMode: null,
+  currentRootFret: null,
+  pattern: [],
+  dots: [],
+  chordToneIndices: [],   // indices of chord tones to find (on active strings)
+  foundIndices: new Set(), // indices already found
+  roundComplete: false,
+
+  // Scoring
+  score: 0,
+  streak: 0,
+  round: 0,
+
+  // Timer
+  sessionStartTime: null,
+  roundStartTime: null,
+  lastRoundTime: null,
+  timerInterval: null
+};
+
+function formatTime(ms) {
+  const totalSec = Math.floor(ms / 1000);
+  const mins = Math.floor(totalSec / 60);
+  const secs = totalSec % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function startTimers() {
+  if (!state.sessionStartTime) {
+    state.sessionStartTime = Date.now();
+  }
+  state.roundStartTime = Date.now();
+
+  if (state.timerInterval) clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(updateTimerDisplay, 200);
+}
+
+function updateTimerDisplay() {
+  const roundEl = document.getElementById('round-timer');
+  const sessionEl = document.getElementById('session-timer');
+
+  if (state.roundStartTime && !state.roundComplete) {
+    roundEl.textContent = formatTime(Date.now() - state.roundStartTime);
+  }
+  if (state.sessionStartTime) {
+    sessionEl.textContent = formatTime(Date.now() - state.sessionStartTime);
+  }
+}
+
+function pickRound() {
+  let scaleKey = state.scaleKey;
+  let modeIndex = state.modeIndex;
+
+  if (scaleKey === 'random') {
+    const keys = Object.keys(SCALE_DEFS);
+    scaleKey = keys[Math.floor(Math.random() * keys.length)];
+  }
+
+  if (modeIndex === null) {
+    const numModes = SCALE_DEFS[scaleKey].modes.length;
+    modeIndex = Math.floor(Math.random() * numModes);
+  }
+
+  const range = getValidFretRange(scaleKey, modeIndex);
+  const rootFret = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+
+  return { scaleKey, modeIndex, rootFret };
+}
+
+function newRound() {
+  state.roundComplete = false;
+  state.foundIndices = new Set();
+  state.round++;
+
+  const { scaleKey, modeIndex, rootFret } = pickRound();
+  state.currentScale = scaleKey;
+  state.currentMode = modeIndex;
+  state.currentRootFret = rootFret;
+
+  state.pattern = computePattern(scaleKey, modeIndex, rootFret);
+
+  // Identify chord tone indices to find (only on active strings, exclude roots)
+  state.chordToneIndices = [];
+  state.pattern.forEach((note, idx) => {
+    if (state.activeStrings[note.string] &&
+        note.chordTone && note.chordTone !== 'root') {
+      state.chordToneIndices.push(idx);
+    }
+  });
+
+  // Render fretboard
+  state.dots = renderFretboard('fretboard-container', state.pattern, state.activeStrings, handleNoteClick);
+
+  // Update prompt
+  updatePrompt(scaleKey, modeIndex, rootFret);
+  updateProgress();
+  updateScoreDisplay();
+  updateRoundDisplay();
+
+  // Start timer
+  startTimers();
+
+  // Hide next button
+  document.getElementById('next-btn').classList.add('hidden');
+}
+
+function updatePrompt(scaleKey, modeIndex, rootFret) {
+  const modeName = SCALE_DEFS[scaleKey].modes[modeIndex];
+  const intervals = getModeIntervals(scaleKey, modeIndex);
+  const rootNote = getRootNoteName(rootFret);
+  const quality = getChordQuality(intervals);
+  const numeral = getRomanNumeral(scaleKey, modeIndex);
+  const chordName = rootNote + quality;
+
+  const modeEl = document.getElementById('mode-name');
+  modeEl.textContent = modeName;
+  modeEl.classList.toggle('hidden', !state.showModeName);
+
+  const chordEl = document.getElementById('chord-info');
+  if (state.showChordName) {
+    chordEl.textContent = `${numeral}  (${chordName})`;
+    chordEl.classList.remove('hidden');
+  } else {
+    chordEl.classList.add('hidden');
+  }
+
+  // Build chord tone type labels for the prompt
+  const toneTypes = new Set();
+  state.chordToneIndices.forEach(idx => {
+    toneTypes.add(state.pattern[idx].label);
+  });
+  const toneList = [...toneTypes].join(', ');
+  document.getElementById('find-prompt').textContent =
+    toneTypes.size > 0 ? `Find the ${toneList}` : 'No chord tones on these strings';
+}
+
+function updateProgress() {
+  const progressEl = document.getElementById('progress');
+
+  // Count by chord tone type
+  const counts = {};
+  state.chordToneIndices.forEach(idx => {
+    const note = state.pattern[idx];
+    const type = note.label;
+    if (!counts[type]) counts[type] = { total: 0, found: 0 };
+    counts[type].total++;
+    if (state.foundIndices.has(idx)) counts[type].found++;
+  });
+
+  progressEl.innerHTML = '';
+  for (const [type, { total, found }] of Object.entries(counts)) {
+    const span = document.createElement('span');
+    span.className = 'progress-item';
+    if (found === total) span.classList.add('complete');
+    span.textContent = `${type}: ${found}/${total}`;
+    progressEl.appendChild(span);
+  }
+}
+
+function updateScoreDisplay() {
+  document.getElementById('score').textContent = state.score;
+  document.getElementById('streak').textContent = state.streak;
+}
+
+function updateRoundDisplay() {
+  document.getElementById('round-num').textContent = state.round;
+}
+
+function handleNoteClick(idx, note, group) {
+  if (state.roundComplete) return;
+  if (state.foundIndices.has(idx)) return; // already found
+
+  const dot = state.dots.find(d => d.index === idx);
+  if (!dot) return;
+
+  if (note.chordTone && note.chordTone !== 'root') {
+    // Correct!
+    state.foundIndices.add(idx);
+    state.score++;
+    state.streak++;
+    markDotCorrect(dot);
+    updateProgress();
+    updateScoreDisplay();
+
+    // Check if round complete
+    if (state.foundIndices.size === state.chordToneIndices.length) {
+      completeRound();
+    }
+  } else {
+    // Wrong
+    state.score = Math.max(0, state.score - 1);
+    state.streak = 0;
+    flashDotWrong(dot);
+    updateScoreDisplay();
+  }
+}
+
+function completeRound() {
+  state.roundComplete = true;
+  state.lastRoundTime = Date.now() - state.roundStartTime;
+
+  const roundTimeEl = document.getElementById('round-timer');
+  roundTimeEl.textContent = formatTime(state.lastRoundTime);
+
+  // Show completion message
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.classList.remove('hidden');
+  nextBtn.focus();
+}
+
+function loadSettings() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('chordGameSettings'));
+    if (saved) {
+      state.scaleKey = saved.scaleKey || 'major';
+      state.modeIndex = saved.modeIndex !== undefined ? saved.modeIndex : null;
+      state.activeStrings = saved.activeStrings || [true, true, true, true, true, true];
+      state.showModeName = saved.showModeName !== undefined ? saved.showModeName : true;
+      state.showChordName = saved.showChordName !== undefined ? saved.showChordName : true;
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function saveSettings() {
+  localStorage.setItem('chordGameSettings', JSON.stringify({
+    scaleKey: state.scaleKey,
+    modeIndex: state.modeIndex,
+    activeStrings: state.activeStrings,
+    showModeName: state.showModeName,
+    showChordName: state.showChordName
+  }));
+}
+
+function resetGame() {
+  state.score = 0;
+  state.streak = 0;
+  state.round = 0;
+  state.sessionStartTime = null;
+  state.lastRoundTime = null;
+  newRound();
+}

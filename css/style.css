@@ -1,0 +1,286 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: #0e0e1a;
+  color: #d0d0e0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#app {
+  width: 100%;
+  max-width: 800px;
+  padding: 12px;
+}
+
+/* Settings */
+#settings {
+  background: #16162a;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #252540;
+}
+
+.settings-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.settings-row:last-child {
+  margin-bottom: 0;
+}
+
+.settings-row label {
+  font-size: 13px;
+  color: #8888aa;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.settings-row select {
+  background: #1e1e35;
+  color: #c0c0d8;
+  border: 1px solid #333355;
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.settings-row select:focus {
+  outline: 1px solid #5566aa;
+}
+
+.settings-row input[type="checkbox"] {
+  accent-color: #5566aa;
+  cursor: pointer;
+}
+
+#custom-strings {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+#custom-strings.hidden {
+  display: none;
+}
+
+.string-checkbox {
+  font-size: 12px;
+  color: #7777aa;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+}
+
+/* Prompt area */
+#prompt {
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+#mode-name {
+  display: block;
+  font-size: 14px;
+  color: #6677aa;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+#mode-name.hidden {
+  display: none;
+}
+
+#find-prompt {
+  font-size: 22px;
+  font-weight: 600;
+  color: #e0e0f0;
+}
+
+#chord-info {
+  display: inline-block;
+  font-size: 16px;
+  color: #8899cc;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+#chord-info.hidden {
+  display: none;
+}
+
+/* Fretboard */
+#fretboard-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-bottom: 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fretboard-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Note dots */
+.note-dot {
+  transition: transform 0.15s ease;
+}
+
+.note-dot:hover .dot-circle {
+  filter: brightness(1.3);
+}
+
+.note-dot.correct {
+  animation: pop 0.3s ease;
+}
+
+.note-dot.wrong {
+  animation: shake 0.35s ease;
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+/* Progress tracker */
+#progress {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.progress-item {
+  font-size: 15px;
+  font-weight: 600;
+  color: #7777aa;
+  padding: 4px 12px;
+  background: #16162a;
+  border-radius: 6px;
+  border: 1px solid #252540;
+  transition: all 0.3s ease;
+}
+
+.progress-item.complete {
+  color: #48bb78;
+  border-color: #2a5a3a;
+  background: #122a1e;
+}
+
+/* Stats bar */
+#stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: #6666888;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-label {
+  color: #555577;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  color: #aaaacc;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Next button */
+#next-btn {
+  display: block;
+  margin: 16px auto 0;
+  padding: 10px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #e0e0f0;
+  background: #2a3a6a;
+  border: 1px solid #3a4a8a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#next-btn:hover {
+  background: #3a4a8a;
+}
+
+#next-btn:focus {
+  outline: 2px solid #5566aa;
+  outline-offset: 2px;
+}
+
+#next-btn.hidden {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  #app {
+    padding: 8px;
+  }
+
+  #settings {
+    padding: 10px 12px;
+  }
+
+  .settings-row {
+    gap: 8px;
+  }
+
+  #find-prompt {
+    font-size: 18px;
+  }
+
+  #progress {
+    gap: 10px;
+  }
+
+  .progress-item {
+    font-size: 13px;
+    padding: 3px 8px;
+  }
+
+  #stats {
+    gap: 14px;
+    font-size: 13px;
+  }
+}
