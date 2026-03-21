@@ -73,11 +73,11 @@ js/
 3. Compute the 3NPS pattern and render it
 4. Display prompt: *"Find the **3rd**, **5th**, and **7th**"* — and show the chord name (e.g., "Dm7 — ii chord")
 5. Player clicks dots. Correct chord-tone clicks turn green and stay. Wrong clicks flash red briefly.
-6. Once all 3 unique chord tones are found (there will be multiple instances of each across the 18 notes — finding *any* instance of each counts), the round completes.
-7. Brief success animation, score updates, next round auto-starts after a short delay.
+6. The player must find **every instance** of each chord tone across the entire shape (not just one of each). For a 3NPS shape on 6 strings (18 notes), there may be ~7–8 chord tones total spread across the fretboard. A progress tracker shows e.g. "3rds: 2/3  5ths: 1/2  7ths: 0/2" so the player knows how many remain.
+7. Once every chord tone in the shape is found, the round completes with a brief success animation, score updates, and next round auto-starts after a short delay.
 
 **Scoring:**
-- +1 point per correct chord tone identified (3 per round if no mistakes)
+- +1 point per correct chord tone identified (typically ~7–8 per round if no mistakes)
 - −1 for wrong clicks
 - Streak counter (consecutive correct clicks without a miss)
 - Running total displayed prominently
@@ -85,6 +85,7 @@ js/
 **Settings (persisted to localStorage):**
 - Scale family: Major / Pentatonic / Harmonic Minor / Random
 - Mode: specific mode or Random
+- **String set filter**: All strings / High strings (G, B, e) / Low strings (E, A, D) / Middle strings (D, G, B) / Custom — only dots on selected strings are shown and need to be identified. Non-selected strings are grayed out on the fretboard for context but have no interactive dots.
 - Show/hide mode name on the diagram (toggle) — useful for learning to visually ID modes
 - Show/hide chord name (toggle) — can hide for extra challenge
 
@@ -95,6 +96,7 @@ js/
 │  ⚙ Settings bar                             │
 │  [Scale: Major ▾] [Mode: Random ▾]         │
 │  [☑ Show mode name] [☑ Show chord name]    │
+│  [Strings: All ▾]                           │
 ├─────────────────────────────────────────────┤
 │                                             │
 │  Mode: Dorian          (if toggled on)      │
@@ -112,7 +114,7 @@ js/
 │                                             │
 │  Score: 12    Streak: 5    Round: 4         │
 │                                             │
-│  [Remaining: 3rd ○  5th ○  7th ○]          │
+│  [3rds: 1/3   5ths: 0/2   7ths: 0/2]       │
 │                                             │
 └─────────────────────────────────────────────┘
 ```
