@@ -82,6 +82,12 @@ js/
 - Streak counter (consecutive correct clicks without a miss)
 - Running total displayed prominently
 
+**Timer:**
+- Elapsed timer starts when the round begins (first dot appears), pauses between rounds
+- Displays per-round time and cumulative session time
+- Per-round time shown on completion so the player can track improvement
+- No countdown/pressure timer — the goal is accuracy and pattern recognition, speed comes naturally
+
 **Settings (persisted to localStorage):**
 - Scale family: Major / Pentatonic / Harmonic Minor / Random
 - Mode: specific mode or Random
@@ -112,7 +118,7 @@ js/
 │  │  5   6   7   8   9                 │     │
 │  └────────────────────────────────────┘     │
 │                                             │
-│  Score: 12    Streak: 5    Round: 4         │
+│  Score: 12   Streak: 5   Round: 4   ⏱ 1:23  │
 │                                             │
 │  [3rds: 1/3   5ths: 0/2   7ths: 0/2]       │
 │                                             │
