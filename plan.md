@@ -14,7 +14,7 @@ A single-page web app (HTML + CSS + vanilla JS, no build tools) that displays 3N
 |---|---|---|
 | **Major** | Ionian, Dorian, Phrygian, Lydian, Mixolydian, Aeolian, Locrian | 7 |
 | **Harmonic Minor** | Harm. minor, Locrian ♮6, Ionian #5, Dorian #4, Phrygian dominant, Lydian #2, Ultralocrian | 7 |
-| **Pentatonic** | Major pent. (pos 1–5), Minor pent. (pos 1–5) — using 3NPS pentatonic shapes | 5 |
+| **Pentatonic** | Major pent. (pos 1–5), Minor pent. (pos 1–5) — standard 2NPS box shapes | 5 |
 
 ### Diatonic Chords
 
@@ -26,7 +26,7 @@ Rather than hard-coding 19 fingering charts, patterns are **computed algorithmic
 
 1. Define each scale as semitone intervals from root (e.g., major = `[0,2,4,5,7,9,11]`).
 2. Pick a mode (rotation of the interval set).
-3. Starting from string 6, place 3 consecutive scale tones per string, computing fret positions using standard tuning offsets `[0, 5, 10, 15, 19, 24]`.
+3. Starting from string 6, place scale tones per string (3NPS for major/harmonic minor, 2NPS for pentatonic), computing fret positions using standard tuning offsets `[0, 5, 10, 15, 19, 24]`.
 4. Allow the pattern to shift position across strings as needed (natural 3NPS behavior).
 5. Assign each note its scale degree (1–7) so we know which dots are chord tones.
 
@@ -73,7 +73,7 @@ js/
 3. Compute the 3NPS pattern and render it
 4. Display prompt: *"Find the **3rd**, **5th**, and **7th**"* — and show the chord name (e.g., "Dm7 — ii chord")
 5. Player clicks dots. Correct chord-tone clicks turn green and stay. Wrong clicks flash red briefly.
-6. The player must find **every instance** of each chord tone across the entire shape (not just one of each). For a 3NPS shape on 6 strings (18 notes), there may be ~7–8 chord tones total spread across the fretboard. A progress tracker shows e.g. "3rds: 2/3  5ths: 1/2  7ths: 0/2" so the player knows how many remain.
+6. The player must find **every instance** of each chord tone across the entire shape (not just one of each). For a 3NPS shape (18 notes) or 2NPS pentatonic shape (12 notes), there may be ~7–8 chord tones total spread across the fretboard. A progress tracker shows e.g. "3rds: 2/3  5ths: 1/2  7ths: 0/2" so the player knows how many remain.
 7. Once every chord tone in the shape is found, the round completes with a brief success animation, score updates, and next round auto-starts after a short delay.
 
 **Scoring:**
