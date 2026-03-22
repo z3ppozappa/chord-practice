@@ -159,7 +159,7 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showD
     labelDegree.setAttribute('opacity', '0');
     group.appendChild(labelDegree);
 
-    if (active && note.chordTone) {
+    if (active) {
       group.style.cursor = 'pointer';
       group.addEventListener('click', () => {
         onNoteClick(idx, note, group);
