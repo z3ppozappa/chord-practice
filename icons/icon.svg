@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0e0e1a"/>
+  <!-- Fret lines -->
+  <line x1="128" y1="100" x2="128" y2="412" stroke="#444" stroke-width="3"/>
+  <line x1="224" y1="100" x2="224" y2="412" stroke="#444" stroke-width="3"/>
+  <line x1="320" y1="100" x2="320" y2="412" stroke="#444" stroke-width="3"/>
+  <line x1="416" y1="100" x2="416" y2="412" stroke="#444" stroke-width="3"/>
+  <!-- Strings -->
+  <line x1="80" y1="140" x2="440" y2="140" stroke="#888" stroke-width="2"/>
+  <line x1="80" y1="196" x2="440" y2="196" stroke="#888" stroke-width="2.5"/>
+  <line x1="80" y1="252" x2="440" y2="252" stroke="#888" stroke-width="3"/>
+  <line x1="80" y1="308" x2="440" y2="308" stroke="#888" stroke-width="3.5"/>
+  <line x1="80" y1="364" x2="440" y2="364" stroke="#888" stroke-width="4"/>
+  <line x1="80" y1="412" x2="440" y2="412" stroke="#888" stroke-width="4.5"/>
+  <!-- Root dot -->
+  <circle cx="176" cy="308" r="28" fill="#1a6b3a" stroke="#38d878" stroke-width="4"/>
+  <text x="176" y="316" fill="#c0ffd8" font-size="24" font-weight="bold" font-family="system-ui,sans-serif" text-anchor="middle">R</text>
+  <!-- 3rd dot -->
+  <circle cx="272" cy="196" r="28" fill="#1a5c3a" stroke="#48bb78" stroke-width="3"/>
+  <text x="272" y="204" fill="#a8f0c8" font-size="22" font-weight="bold" font-family="system-ui,sans-serif" text-anchor="middle">3</text>
+  <!-- 5th dot -->
+  <circle cx="368" cy="364" r="28" fill="#1a5c3a" stroke="#48bb78" stroke-width="3"/>
+  <text x="368" y="372" fill="#a8f0c8" font-size="22" font-weight="bold" font-family="system-ui,sans-serif" text-anchor="middle">5</text>
+  <!-- Inactive dots -->
+  <circle cx="176" cy="140" r="22" fill="#2a2a3a" stroke="#4a4a5a" stroke-width="2" opacity="0.5"/>
+  <circle cx="368" cy="252" r="22" fill="#2a2a3a" stroke="#4a4a5a" stroke-width="2" opacity="0.5"/>
+</svg>
