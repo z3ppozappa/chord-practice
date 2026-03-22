@@ -112,6 +112,18 @@ body {
   color: #e0e0f0;
 }
 
+#shape-info {
+  display: block;
+  font-size: 13px;
+  color: #99aacc;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
+}
+
+#shape-info.hidden {
+  display: none;
+}
+
 #parent-key-info {
   display: block;
   font-size: 13px;

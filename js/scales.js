@@ -232,12 +232,22 @@ function computePattern(scaleKey, modeIndex, rootFret) {
   return notes;
 }
 
-// Mark chord tones in a pattern based on a chord
-function markChordTones(pattern, chordInfo) {
+// Mark chord tones in a pattern based on a chord.
+// When shapeModeIndex !== keyCenterModeIndex, converts degree indices
+// from the shape's perspective to the key center's perspective before matching.
+function markChordTones(pattern, chordInfo, shapeModeIndex, keyCenterModeIndex) {
+  const numNotes = pattern.length > 0 ? new Set(pattern.map(n => n.degreeIndex)).size : 7;
+  const needsConvert = shapeModeIndex !== undefined && keyCenterModeIndex !== undefined
+    && shapeModeIndex !== keyCenterModeIndex;
+
   pattern.forEach(note => {
-    if (chordInfo.chordDegreeIndices.includes(note.degreeIndex)) {
-      note.chordTone = chordInfo.degreeToneTypes[note.degreeIndex];
-      note.label = chordInfo.degreeLabels[note.degreeIndex];
+    const kcDegree = needsConvert
+      ? convertDegreeIndex(note.degreeIndex, shapeModeIndex, keyCenterModeIndex, numNotes)
+      : note.degreeIndex;
+
+    if (chordInfo.chordDegreeIndices.includes(kcDegree)) {
+      note.chordTone = chordInfo.degreeToneTypes[kcDegree];
+      note.label = chordInfo.degreeLabels[kcDegree];
     } else {
       note.chordTone = null;
       note.label = '';
@@ -246,9 +256,12 @@ function markChordTones(pattern, chordInfo) {
 }
 
 // Compute scale degree labels for all notes in a pattern.
-// modalDegree: degreeIndex + 1 (1-7, relative to mode root)
-// parentDegree: degree relative to parent key root
-function assignScaleDegrees(pattern, scaleKey, modeIndex) {
+// modalDegree: degree relative to key center root (1-based)
+// parentDegree: degree relative to parent key root (1-based)
+// shapeModeIndex: the mode used to generate the pattern (for the shape)
+// keyCenterModeIndex: the mode used as the musical key center
+function assignScaleDegrees(pattern, scaleKey, shapeModeIndex, keyCenterModeIndex) {
+  if (keyCenterModeIndex === undefined) keyCenterModeIndex = shapeModeIndex;
   const numNotes = SCALE_DEFS[scaleKey].intervals.length;
 
   if (scaleKey === 'pentatonic') {
@@ -259,15 +272,17 @@ function assignScaleDegrees(pattern, scaleKey, modeIndex) {
       [4, 5, 0, 1, 2],
       [5, 0, 1, 2, 4], // mode 4: minor pent
     ];
-    const parentMap = parentMaps[modeIndex];
+    const parentMap = parentMaps[shapeModeIndex];
     pattern.forEach(note => {
-      note.modalDegree = note.degreeIndex + 1;
+      const kcDegree = convertDegreeIndex(note.degreeIndex, shapeModeIndex, keyCenterModeIndex, numNotes);
+      note.modalDegree = kcDegree + 1;
       note.parentDegree = parentMap[note.degreeIndex] + 1;
     });
   } else {
     pattern.forEach(note => {
-      note.modalDegree = note.degreeIndex + 1;
-      note.parentDegree = (note.degreeIndex + modeIndex) % numNotes + 1;
+      const kcDegree = convertDegreeIndex(note.degreeIndex, shapeModeIndex, keyCenterModeIndex, numNotes);
+      note.modalDegree = kcDegree + 1;
+      note.parentDegree = (note.degreeIndex + shapeModeIndex) % numNotes + 1;
     });
   }
 }
@@ -299,6 +314,25 @@ function getRootNoteName(rootFret) {
 
 function getChordRootName(rootFret, chordRootSemitones) {
   return NOTE_NAMES[(4 + rootFret + chordRootSemitones) % 12];
+}
+
+// Convert a degree index from one mode's perspective to another mode's perspective
+// within the same parent scale. Both modes share the same notes, just different roots.
+function convertDegreeIndex(degreeIndex, fromModeIndex, toModeIndex, numNotes) {
+  return (degreeIndex + fromModeIndex - toModeIndex + numNotes * 2) % numNotes;
+}
+
+// Calculate the root fret for a shape (position) given the key center root fret.
+// E.g., if key center is Dorian at fret 7, Lydian shape root would be at fret 10.
+function getShapeRootFret(keyCenterRootFret, scaleKey, keyCenterModeIndex, shapeModeIndex) {
+  if (keyCenterModeIndex === shapeModeIndex) return keyCenterRootFret;
+  const base = SCALE_DEFS[scaleKey].intervals;
+  const offset = (base[shapeModeIndex] - base[keyCenterModeIndex] + 12) % 12;
+  let fret = keyCenterRootFret + offset;
+  const range = getValidFretRange(scaleKey, shapeModeIndex);
+  if (fret > range.max) fret -= 12;
+  if (fret < range.min) fret += 12;
+  return fret;
 }
 
 function getValidFretRange(scaleKey, modeIndex) {

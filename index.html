@@ -18,8 +18,19 @@
             <option value="random">Random</option>
           </select>
         </label>
-        <label>Mode
+        <label>Key Center
           <select id="mode-select">
+            <option value="random">Random</option>
+          </select>
+        </label>
+        <label>Position
+          <select id="position-select">
+            <option value="0">Root</option>
+            <option value="-1">Random</option>
+          </select>
+        </label>
+        <label>Chord
+          <select id="chord-select">
             <option value="random">Random</option>
           </select>
         </label>
@@ -45,6 +56,7 @@
     <main id="game">
       <div id="prompt">
         <span id="mode-name"></span>
+        <span id="shape-info" class="hidden"></span>
         <span id="parent-key-info" class="hidden"></span>
         <div id="find-prompt"></div>
       </div>

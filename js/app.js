@@ -21,11 +21,13 @@ function initSettingsUI() {
   scaleSelect.addEventListener('change', () => {
     state.scaleKey = scaleSelect.value;
     updateModeOptions();
+    updatePositionOptions();
+    updateChordOptions();
     saveSettings();
     newRound();
   });
 
-  // Mode selector
+  // Key center (mode) selector
   updateModeOptions();
   document.getElementById('mode-select').addEventListener('change', () => {
     const val = document.getElementById('mode-select').value;
@@ -39,6 +41,25 @@ function initSettingsUI() {
     } else {
       state.modeIndex = parseInt(val);
     }
+    updatePositionOptions();
+    updateChordOptions();
+    saveSettings();
+    newRound();
+  });
+
+  // Position selector
+  updatePositionOptions();
+  document.getElementById('position-select').addEventListener('change', () => {
+    state.positionOffset = parseInt(document.getElementById('position-select').value);
+    saveSettings();
+    newRound();
+  });
+
+  // Chord selector
+  updateChordOptions();
+  document.getElementById('chord-select').addEventListener('change', () => {
+    const val = document.getElementById('chord-select').value;
+    state.chordDegree = val === 'random' ? null : parseInt(val);
     saveSettings();
     newRound();
   });
@@ -205,5 +226,78 @@ function detectStringPreset() {
   } else {
     stringPreset.value = 'custom';
     customStrings.classList.remove('hidden');
+  }
+}
+
+function updatePositionOptions() {
+  const posSelect = document.getElementById('position-select');
+  posSelect.innerHTML = '';
+
+  // Root option (same as key center)
+  const rootOpt = document.createElement('option');
+  rootOpt.value = '0';
+  rootOpt.textContent = 'Root';
+  posSelect.appendChild(rootOpt);
+
+  // Random option
+  const randOpt = document.createElement('option');
+  randOpt.value = '-1';
+  randOpt.textContent = 'Random';
+  posSelect.appendChild(randOpt);
+
+  // Position options depend on the scale and key center
+  const scaleKey = state.scaleKey;
+  if (scaleKey !== 'random' && state.modeIndex !== null) {
+    const def = SCALE_DEFS[scaleKey];
+    const numModes = def.modes.length;
+    for (let offset = 1; offset < numModes; offset++) {
+      const shapeModeIdx = (state.modeIndex + offset) % numModes;
+      const opt = document.createElement('option');
+      opt.value = offset;
+      opt.textContent = `Pos ${offset + 1} — ${def.modes[shapeModeIdx]}`;
+      posSelect.appendChild(opt);
+    }
+  }
+
+  // Restore selection
+  posSelect.value = state.positionOffset;
+  // If the value wasn't found (e.g., offset out of range after scale change), reset to root
+  if (posSelect.value !== String(state.positionOffset)) {
+    state.positionOffset = 0;
+    posSelect.value = '0';
+  }
+}
+
+function updateChordOptions() {
+  const chordSelect = document.getElementById('chord-select');
+  chordSelect.innerHTML = '';
+
+  // Random option
+  const randOpt = document.createElement('option');
+  randOpt.value = 'random';
+  randOpt.textContent = 'Random';
+  chordSelect.appendChild(randOpt);
+
+  // Show specific chords when key center is fixed and scale is not random
+  const scaleKey = state.scaleKey;
+  if (scaleKey !== 'random' && state.modeIndex !== null) {
+    const chords = getAvailableChords(scaleKey, state.modeIndex);
+    chords.forEach((chord, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = chord.romanNumeral;
+      chordSelect.appendChild(opt);
+    });
+  }
+
+  // Restore selection
+  if (state.chordDegree !== null) {
+    chordSelect.value = state.chordDegree;
+    if (chordSelect.value !== String(state.chordDegree)) {
+      state.chordDegree = null;
+      chordSelect.value = 'random';
+    }
+  } else {
+    chordSelect.value = 'random';
   }
 }

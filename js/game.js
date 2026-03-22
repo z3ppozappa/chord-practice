@@ -3,7 +3,9 @@
 const state = {
   // Settings
   scaleKey: 'major',
-  modeIndex: null, // null = random
+  modeIndex: null,           // null = random (key center mode)
+  positionOffset: 0,         // 0 = root (same as key center), -1 = random, 1-6 = offset from key center
+  chordDegree: null,         // null = random, 0-6 = specific chord degree
   activeStrings: [true, true, true, true, true, true],
   showModeName: true,
   showChordName: true,
@@ -12,8 +14,10 @@ const state = {
 
   // Current round
   currentScale: null,
-  currentMode: null,
-  currentRootFret: null,
+  currentMode: null,          // key center mode index for this round
+  currentShapeMode: null,     // shape/position mode index for this round
+  currentRootFret: null,      // key center root fret
+  currentShapeRootFret: null, // shape root fret (may differ from key center)
   currentChordInfo: null,
   pattern: [],
   dots: [],
@@ -64,22 +68,36 @@ function updateTimerDisplay() {
 
 function pickRound() {
   let scaleKey = state.scaleKey;
-  let modeIndex = state.modeIndex;
+  let keyCenterMode = state.modeIndex;
 
   if (scaleKey === 'random') {
     const keys = Object.keys(SCALE_DEFS);
     scaleKey = keys[Math.floor(Math.random() * keys.length)];
   }
 
-  if (modeIndex === null) {
-    const numModes = SCALE_DEFS[scaleKey].modes.length;
-    modeIndex = Math.floor(Math.random() * numModes);
+  const numModes = SCALE_DEFS[scaleKey].modes.length;
+
+  if (keyCenterMode === null) {
+    keyCenterMode = Math.floor(Math.random() * numModes);
   }
 
-  const range = getValidFretRange(scaleKey, modeIndex);
+  // Determine shape mode from position offset
+  let shapeMode;
+  if (state.positionOffset === -1) {
+    // Random position
+    shapeMode = Math.floor(Math.random() * numModes);
+  } else {
+    shapeMode = (keyCenterMode + state.positionOffset) % numModes;
+  }
+
+  // Pick root fret for the key center
+  const range = getValidFretRange(scaleKey, keyCenterMode);
   const rootFret = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
 
-  return { scaleKey, modeIndex, rootFret };
+  // Compute shape root fret
+  const shapeRootFret = getShapeRootFret(rootFret, scaleKey, keyCenterMode, shapeMode);
+
+  return { scaleKey, keyCenterMode, shapeMode, rootFret, shapeRootFret };
 }
 
 function newRound() {
@@ -87,19 +105,31 @@ function newRound() {
   state.foundIndices = new Set();
   state.round++;
 
-  const { scaleKey, modeIndex, rootFret } = pickRound();
+  const { scaleKey, keyCenterMode, shapeMode, rootFret, shapeRootFret } = pickRound();
   state.currentScale = scaleKey;
-  state.currentMode = modeIndex;
+  state.currentMode = keyCenterMode;
+  state.currentShapeMode = shapeMode;
   state.currentRootFret = rootFret;
+  state.currentShapeRootFret = shapeRootFret;
 
-  // Pick a random diatonic triad from the available chords
-  const chords = getAvailableChords(scaleKey, modeIndex);
-  state.currentChordInfo = chords[Math.floor(Math.random() * chords.length)];
+  // Get chords relative to the key center mode
+  const chords = getAvailableChords(scaleKey, keyCenterMode);
 
-  // Compute pattern and mark chord tones
-  state.pattern = computePattern(scaleKey, modeIndex, rootFret);
-  markChordTones(state.pattern, state.currentChordInfo);
-  assignScaleDegrees(state.pattern, scaleKey, modeIndex);
+  // Pick chord: fixed degree or random
+  if (state.chordDegree !== null && state.chordDegree < chords.length) {
+    state.currentChordInfo = chords[state.chordDegree];
+  } else {
+    state.currentChordInfo = chords[Math.floor(Math.random() * chords.length)];
+  }
+
+  // Compute pattern using the SHAPE mode and shape root fret
+  state.pattern = computePattern(scaleKey, shapeMode, shapeRootFret);
+
+  // Mark chord tones with degree conversion (shape → key center)
+  markChordTones(state.pattern, state.currentChordInfo, shapeMode, keyCenterMode);
+
+  // Assign scale degrees (modal degrees relative to key center)
+  assignScaleDegrees(state.pattern, scaleKey, shapeMode, keyCenterMode);
 
   // Identify chord tone indices to find (on active strings)
   state.chordToneIndices = [];
@@ -124,7 +154,7 @@ function newRound() {
   }
 
   // Update prompt
-  updatePrompt(scaleKey, modeIndex, rootFret);
+  updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret);
   updateProgress();
   updateScoreDisplay();
   updateRoundDisplay();
@@ -136,16 +166,29 @@ function newRound() {
   document.getElementById('next-btn').classList.add('hidden');
 }
 
-function updatePrompt(scaleKey, modeIndex, rootFret) {
-  const modeName = SCALE_DEFS[scaleKey].modes[modeIndex];
+function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
+  const keyCenterName = SCALE_DEFS[scaleKey].modes[keyCenterMode];
+  const shapeName = SCALE_DEFS[scaleKey].modes[shapeMode];
   const chordInfo = state.currentChordInfo;
   const chordRootName = getChordRootName(rootFret, chordInfo.rootSemitones);
   const chordName = chordRootName + chordInfo.quality;
   const numeral = chordInfo.romanNumeral;
 
+  // Key center mode name
   const modeEl = document.getElementById('mode-name');
-  modeEl.textContent = modeName;
+  modeEl.textContent = keyCenterName;
   modeEl.classList.toggle('hidden', !state.showModeName);
+
+  // Shape/position info (show when shape differs from key center)
+  const shapeEl = document.getElementById('shape-info');
+  if (shapeEl) {
+    if (shapeMode !== keyCenterMode) {
+      shapeEl.textContent = `${shapeName} shape`;
+      shapeEl.classList.remove('hidden');
+    } else {
+      shapeEl.classList.add('hidden');
+    }
+  }
 
   // Merged prompt: always show chord, optionally hide name
   const findEl = document.getElementById('find-prompt');
@@ -161,7 +204,7 @@ function updatePrompt(scaleKey, modeIndex, rootFret) {
   const parentEl = document.getElementById('parent-key-info');
   if (parentEl) {
     if (state.parentKeyDegrees) {
-      const parentRoot = getParentKeyRootName(rootFret, scaleKey, modeIndex);
+      const parentRoot = getParentKeyRootName(rootFret, scaleKey, keyCenterMode);
       const parentLabel = getParentKeyLabel(scaleKey);
       parentEl.textContent = `Parent: ${parentRoot} ${parentLabel}`;
       parentEl.classList.remove('hidden');
@@ -249,6 +292,8 @@ function loadSettings() {
     if (saved) {
       state.scaleKey = saved.scaleKey || 'major';
       state.modeIndex = saved.modeIndex !== undefined ? saved.modeIndex : null;
+      state.positionOffset = saved.positionOffset !== undefined ? saved.positionOffset : 0;
+      state.chordDegree = saved.chordDegree !== undefined ? saved.chordDegree : null;
       state.activeStrings = saved.activeStrings || [true, true, true, true, true, true];
       state.showModeName = saved.showModeName !== undefined ? saved.showModeName : true;
       state.showChordName = saved.showChordName !== undefined ? saved.showChordName : true;
@@ -262,6 +307,8 @@ function saveSettings() {
   localStorage.setItem('chordGameSettings', JSON.stringify({
     scaleKey: state.scaleKey,
     modeIndex: state.modeIndex,
+    positionOffset: state.positionOffset,
+    chordDegree: state.chordDegree,
     activeStrings: state.activeStrings,
     showModeName: state.showModeName,
     showChordName: state.showChordName,
