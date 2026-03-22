@@ -38,76 +38,140 @@ function getModeIntervals(scaleKey, modeIndex) {
   return intervals;
 }
 
-// Get a diatonic chord built on any degree of the current mode.
-// chordDegree is 0-indexed (0 = I chord, 1 = ii chord, etc.)
-// Returns which scale degree indices belong to the chord, their labels, quality, numeral.
-function getDiatonicChord(scaleKey, modeIndex, chordDegree) {
-  const intervals = getModeIntervals(scaleKey, modeIndex);
+// Build a diatonic triad on a given degree of a 7-note scale
+function buildTriad(intervals, chordDegree) {
   const numNotes = intervals.length;
+  const chordIndices = [
+    chordDegree,
+    (chordDegree + 2) % numNotes,
+    (chordDegree + 4) % numNotes
+  ];
 
-  // Build chord by stacking thirds (every other scale degree)
-  // 7-note scales: 4-note chords (R, 3, 5, 7)
-  // 5-note scales: 3-note chords (R, 3, 5) — no clean 7th available
-  const chordSize = numNotes === 7 ? 4 : 3;
-  const chordIndices = [];
-  for (let i = 0; i < chordSize; i++) {
-    chordIndices.push((chordDegree + i * 2) % numNotes);
-  }
-
-  // Compute intervals relative to chord root
   const rootInterval = intervals[chordDegree];
-  const relativeIntervals = chordIndices.map(idx =>
+  const relIntervals = chordIndices.map(idx =>
     (intervals[idx] - rootInterval + 12) % 12
   );
 
-  // Build labels and types for each chord tone degree
+  const third = relIntervals[1];
+  const fifth = relIntervals[2];
+
   const degreeLabels = {};
   const degreeToneTypes = {};
   chordIndices.forEach((degIdx, i) => {
-    const rel = relativeIntervals[i];
+    const rel = relIntervals[i];
     degreeLabels[degIdx] = i === 0 ? 'R' : getChordToneLabel(rel);
     degreeToneTypes[degIdx] = i === 0 ? 'root' : getChordToneType(rel);
   });
-
-  const third = relativeIntervals[1];
-  const fifth = relativeIntervals[2];
-  const seventh = chordSize >= 4 ? relativeIntervals[3] : undefined;
 
   return {
     chordDegreeIndices: chordIndices,
     degreeLabels,
     degreeToneTypes,
-    quality: computeQuality(third, fifth, seventh),
+    quality: computeTriadQuality(third, fifth),
     romanNumeral: computeRoman(chordDegree, third, fifth),
     rootSemitones: rootInterval
   };
 }
 
-function computeQuality(third, fifth, seventh) {
-  if (third === 4 && fifth === 7 && seventh === 11) return 'maj7';
-  if (third === 4 && fifth === 7 && seventh === 10) return '7';
-  if (third === 3 && fifth === 7 && seventh === 10) return 'm7';
-  if (third === 3 && fifth === 6 && seventh === 10) return 'm7♭5';
-  if (third === 3 && fifth === 6 && seventh === 9) return '°7';
-  if (third === 3 && fifth === 7 && seventh === 11) return 'mMaj7';
-  if (third === 4 && fifth === 8 && seventh === 11) return 'maj7♯5';
-  if (third === 4 && fifth === 8 && seventh === 10) return '7♯5';
-  // Triads (pentatonic)
-  if (third === 4 && fifth === 7) return '';
-  if (third === 3 && fifth === 7) return 'm';
-  if (third === 3 && fifth === 6) return '°';
-  if (third === 4 && fifth === 8) return '+';
-  // Unusual pentatonic stacks
-  if (third === 3 && fifth === 8) return 'm(♯5)';
-  if (third === 2 && fifth === 7) return 'sus2';
-  if (third === 5 && fifth === 7) return 'sus4';
+// Get all available triads for a given scale/mode
+function getAvailableChords(scaleKey, modeIndex) {
+  const intervals = getModeIntervals(scaleKey, modeIndex);
+
+  if (intervals.length === 7) {
+    // 7 diatonic triads, one per degree
+    return Array.from({ length: 7 }, (_, d) => buildTriad(intervals, d));
+  }
+
+  if (scaleKey === 'pentatonic') {
+    return getPentatonicTriads(modeIndex);
+  }
+
+  return [];
+}
+
+// Pentatonic: only the parent major key's I and vi triads are fully
+// present within the 5 pentatonic notes. Compute them per mode.
+function getPentatonicTriads(modeIndex) {
+  const modeIntervals = getModeIntervals('pentatonic', modeIndex);
+
+  // Which parent major scale degrees each pentatonic index maps to
+  const parentMaps = [
+    [0, 1, 2, 4, 5], // mode 0: major pent
+    [1, 2, 4, 5, 0], // mode 1
+    [2, 4, 5, 0, 1], // mode 2
+    [4, 5, 0, 1, 2], // mode 3
+    [5, 0, 1, 2, 4], // mode 4: minor pent
+  ];
+
+  const parentMap = parentMaps[modeIndex];
+
+  // The two parent-key triads whose notes are all in the pentatonic
+  // I = parent degrees {0, 2, 4}, vi = parent degrees {5, 0, 2}
+  const parentTriads = [
+    [0, 2, 4],
+    [5, 0, 2]
+  ];
+
+  const triads = [];
+
+  for (const parentDegrees of parentTriads) {
+    const pentIndices = parentDegrees.map(pd => parentMap.indexOf(pd));
+    if (pentIndices.includes(-1)) continue;
+
+    const rootPentIdx = pentIndices[0];
+    const rootInterval = modeIntervals[rootPentIdx];
+
+    const relIntervals = pentIndices.map(pi =>
+      (modeIntervals[pi] - rootInterval + 12) % 12
+    );
+
+    const third = relIntervals[1];
+    const fifth = relIntervals[2];
+
+    const degreeLabels = {};
+    const degreeToneTypes = {};
+    pentIndices.forEach((pi, i) => {
+      const rel = relIntervals[i];
+      degreeLabels[pi] = i === 0 ? 'R' : getChordToneLabel(rel);
+      degreeToneTypes[pi] = i === 0 ? 'root' : getChordToneType(rel);
+    });
+
+    triads.push({
+      chordDegreeIndices: pentIndices,
+      degreeLabels,
+      degreeToneTypes,
+      quality: computeTriadQuality(third, fifth),
+      romanNumeral: romanFromInterval(rootInterval, third, fifth),
+      rootSemitones: rootInterval
+    });
+  }
+
+  return triads;
+}
+
+function computeTriadQuality(third, fifth) {
+  if (third === 4 && fifth === 7) return '';       // major
+  if (third === 3 && fifth === 7) return 'm';      // minor
+  if (third === 3 && fifth === 6) return '°';      // diminished
+  if (third === 4 && fifth === 8) return '+';      // augmented
   return '';
 }
 
+// Roman numeral from scale degree index (for 7-note scales)
 function computeRoman(degreeIndex, third, fifth) {
   const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
-  let numeral = numerals[degreeIndex] || (degreeIndex + 1).toString();
-  if (third === 3 || third === 2) numeral = numeral.toLowerCase();
+  let numeral = numerals[degreeIndex];
+  if (third === 3) numeral = numeral.toLowerCase();
+  if (fifth === 6) numeral += '°';
+  if (fifth === 8) numeral += '+';
+  return numeral;
+}
+
+// Roman numeral from semitone interval above mode root (for pentatonic)
+function romanFromInterval(semitones, third, fifth) {
+  const majorNumerals = ['I', '♭II', 'II', '♭III', 'III', 'IV', '♭V', 'V', '♭VI', 'VI', '♭VII', 'VII'];
+  const minorNumerals = ['i', '♭ii', 'ii', '♭iii', 'iii', 'iv', '♭v', 'v', '♭vi', 'vi', '♭vii', 'vii'];
+  let numeral = (third === 3) ? minorNumerals[semitones % 12] : majorNumerals[semitones % 12];
   if (fifth === 6) numeral += '°';
   if (fifth === 8) numeral += '+';
   return numeral;
@@ -122,11 +186,8 @@ function getChordToneLabel(interval) {
     case 6: return '♭5';
     case 7: return '5';
     case 8: return '♯5';
-    case 9: return '𝄫7';
     case 10: return '♭7';
     case 11: return '7';
-    case 2: return '2';
-    case 5: return '4';
     default: return '';
   }
 }
@@ -134,13 +195,13 @@ function getChordToneLabel(interval) {
 function getChordToneType(interval) {
   const i = ((interval % 12) + 12) % 12;
   if (i === 0) return 'root';
-  if (i === 2 || i === 3 || i === 4 || i === 5) return '3rd';
+  if (i === 3 || i === 4) return '3rd';
   if (i === 6 || i === 7 || i === 8) return '5th';
-  if (i === 9 || i === 10 || i === 11) return '7th';
+  if (i === 10 || i === 11) return '7th';
   return null;
 }
 
-// Compute NPS pattern — just positions and degree indices, no chord tone assignment
+// Compute NPS pattern — positions and degree indices only
 function computePattern(scaleKey, modeIndex, rootFret) {
   const intervals = getModeIntervals(scaleKey, modeIndex);
   const nps = SCALE_DEFS[scaleKey].notesPerString;
@@ -171,7 +232,7 @@ function computePattern(scaleKey, modeIndex, rootFret) {
   return notes;
 }
 
-// Mark chord tones in a pattern based on a diatonic chord
+// Mark chord tones in a pattern based on a chord
 function markChordTones(pattern, chordInfo) {
   pattern.forEach(note => {
     if (chordInfo.chordDegreeIndices.includes(note.degreeIndex)) {

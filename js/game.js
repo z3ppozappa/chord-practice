@@ -77,11 +77,7 @@ function pickRound() {
   const range = getValidFretRange(scaleKey, modeIndex);
   const rootFret = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
 
-  // Pick a random diatonic chord degree
-  const numDegrees = SCALE_DEFS[scaleKey].intervals.length;
-  const chordDegree = Math.floor(Math.random() * numDegrees);
-
-  return { scaleKey, modeIndex, rootFret, chordDegree };
+  return { scaleKey, modeIndex, rootFret };
 }
 
 function newRound() {
@@ -89,13 +85,14 @@ function newRound() {
   state.foundIndices = new Set();
   state.round++;
 
-  const { scaleKey, modeIndex, rootFret, chordDegree } = pickRound();
+  const { scaleKey, modeIndex, rootFret } = pickRound();
   state.currentScale = scaleKey;
   state.currentMode = modeIndex;
   state.currentRootFret = rootFret;
 
-  // Get chord info for the randomly chosen diatonic chord
-  state.currentChordInfo = getDiatonicChord(scaleKey, modeIndex, chordDegree);
+  // Pick a random diatonic triad from the available chords
+  const chords = getAvailableChords(scaleKey, modeIndex);
+  state.currentChordInfo = chords[Math.floor(Math.random() * chords.length)];
 
   // Compute pattern and mark chord tones
   state.pattern = computePattern(scaleKey, modeIndex, rootFret);
