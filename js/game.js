@@ -141,16 +141,11 @@ function updatePrompt(scaleKey, modeIndex, rootFret) {
     chordEl.classList.add('hidden');
   }
 
-  // Build chord tone type labels for the prompt
-  const toneLabels = [];
-  const seen = new Set();
-  state.chordToneIndices.forEach(idx => {
-    const label = state.pattern[idx].label;
-    if (!seen.has(label)) {
-      seen.add(label);
-      toneLabels.push(label);
-    }
-  });
+  // Build chord tone labels in R, 3, 5 order
+  const toneOrder = ['R', '3', '♭3', '5', '♭5', '♯5'];
+  const present = new Set();
+  state.chordToneIndices.forEach(idx => present.add(state.pattern[idx].label));
+  const toneLabels = toneOrder.filter(l => present.has(l));
   document.getElementById('find-prompt').textContent =
     toneLabels.length > 0 ? `Find the ${toneLabels.join(', ')}` : 'No chord tones on these strings';
 }
