@@ -36,9 +36,9 @@ const state = {
   streak: 0,
   round: 0,
   strikes: 0,
+  roundPerfect: true,
 
   // Timer
-  sessionStartTime: null,
   roundStartTime: null,
   lastRoundTime: null,
   timerInterval: null
@@ -52,9 +52,6 @@ function formatTime(ms) {
 }
 
 function startTimers() {
-  if (!state.sessionStartTime) {
-    state.sessionStartTime = Date.now();
-  }
   state.roundStartTime = Date.now();
 
   if (state.timerInterval) clearInterval(state.timerInterval);
@@ -63,13 +60,9 @@ function startTimers() {
 
 function updateTimerDisplay() {
   const roundEl = document.getElementById('round-timer');
-  const sessionEl = document.getElementById('session-timer');
 
   if (state.roundStartTime && !state.roundComplete) {
     roundEl.textContent = formatTime(Date.now() - state.roundStartTime);
-  }
-  if (state.sessionStartTime) {
-    sessionEl.textContent = formatTime(Date.now() - state.sessionStartTime);
   }
 }
 
@@ -111,6 +104,7 @@ function newRound() {
   state.roundComplete = false;
   state.foundIndices = new Set();
   state.strikes = 0;
+  state.roundPerfect = true;
   state.round++;
 
   const { scaleKey, keyCenterMode, shapeMode, rootFret, shapeRootFret } = pickRound();
@@ -239,7 +233,14 @@ function updateProgress() {
   });
 
   progressEl.innerHTML = '';
-  for (const [type, { total, found }] of Object.entries(counts)) {
+  const order = ['R', 'b3', '3', 'b5', '5'];
+  const sortedTypes = Object.keys(counts).sort((a, b) => {
+    const ai = order.indexOf(a);
+    const bi = order.indexOf(b);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+  for (const type of sortedTypes) {
+    const { total, found } = counts[type];
     const span = document.createElement('span');
     span.className = 'progress-item';
     if (found === total) span.classList.add('complete');
@@ -268,7 +269,6 @@ function handleNoteClick(idx, note, group) {
     // Correct!
     state.foundIndices.add(idx);
     state.score++;
-    state.streak++;
     markDotCorrect(dot, state.showScaleDegrees);
     updateProgress();
     updateScoreDisplay();
@@ -279,7 +279,7 @@ function handleNoteClick(idx, note, group) {
   } else {
     // Wrong
     state.score = Math.max(0, state.score - 1);
-    state.streak = 0;
+    state.roundPerfect = false;
     state.strikes++;
     flashDotWrong(dot);
     updateScoreDisplay();
@@ -349,6 +349,13 @@ function completeRound() {
   state.roundComplete = true;
   state.lastRoundTime = Date.now() - state.roundStartTime;
 
+  if (state.roundPerfect) {
+    state.streak++;
+  } else {
+    state.streak = 0;
+  }
+  updateScoreDisplay();
+
   const roundTimeEl = document.getElementById('round-timer');
   roundTimeEl.textContent = formatTime(state.lastRoundTime);
 
@@ -392,7 +399,6 @@ function resetGame() {
   state.score = 0;
   state.streak = 0;
   state.round = 0;
-  state.sessionStartTime = null;
   state.lastRoundTime = null;
   newRound();
 }
