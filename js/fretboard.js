@@ -136,6 +136,10 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick) {
       circle.setAttribute('stroke', '#2a2a3a');
       circle.setAttribute('stroke-width', '1');
       circle.setAttribute('opacity', '0.3');
+    } else if (note.chordTone === 'root') {
+      circle.setAttribute('fill', '#333345');
+      circle.setAttribute('stroke', '#6a6a8a');
+      circle.setAttribute('stroke-width', '2.5');
     } else {
       circle.setAttribute('fill', '#2a2a3a');
       circle.setAttribute('stroke', '#4a4a5a');
