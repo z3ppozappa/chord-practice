@@ -136,10 +136,6 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick) {
       circle.setAttribute('stroke', '#2a2a3a');
       circle.setAttribute('stroke-width', '1');
       circle.setAttribute('opacity', '0.3');
-    } else if (note.chordTone === 'root') {
-      circle.setAttribute('fill', '#1a3a5c');
-      circle.setAttribute('stroke', '#3a6a9a');
-      circle.setAttribute('stroke-width', '2');
     } else {
       circle.setAttribute('fill', '#2a2a3a');
       circle.setAttribute('stroke', '#4a4a5a');
@@ -160,18 +156,11 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick) {
       class: 'dot-label'
     });
 
-    // Show R on roots always
-    if (active && note.chordTone === 'root') {
-      label.textContent = 'R';
-      label.setAttribute('opacity', '1');
-      label.setAttribute('fill', '#6aa4d6');
-    } else {
-      label.textContent = note.label;
-      label.setAttribute('opacity', '0');
-    }
+    label.textContent = note.label;
+    label.setAttribute('opacity', '0');
     group.appendChild(label);
 
-    if (active && note.chordTone !== 'root') {
+    if (active && note.chordTone) {
       group.style.cursor = 'pointer';
       group.addEventListener('click', () => {
         onNoteClick(idx, note, group);

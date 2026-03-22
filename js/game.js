@@ -95,7 +95,7 @@ function newRound() {
   state.chordToneIndices = [];
   state.pattern.forEach((note, idx) => {
     if (state.activeStrings[note.string] &&
-        note.chordTone && note.chordTone !== 'root') {
+        note.chordTone) {
       state.chordToneIndices.push(idx);
     }
   });
@@ -184,7 +184,7 @@ function handleNoteClick(idx, note, group) {
   const dot = state.dots.find(d => d.index === idx);
   if (!dot) return;
 
-  if (note.chordTone && note.chordTone !== 'root') {
+  if (note.chordTone) {
     // Correct!
     state.foundIndices.add(idx);
     state.score++;
