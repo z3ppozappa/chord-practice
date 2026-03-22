@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chord-tones-v6';
+const CACHE_NAME = 'chord-tones-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -33,10 +33,15 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Serve from cache, fall back to network
+// Network first, fall back to cache (ensures updates are picked up when online)
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(cached => cached || fetch(event.request))
+    fetch(event.request)
+      .then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
