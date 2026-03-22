@@ -43,7 +43,7 @@ body {
 
 .settings-row label {
   font-size: 13px;
-  color: #8888aa;
+  color: #b0b0cc;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -80,7 +80,7 @@ body {
 
 .string-checkbox {
   font-size: 12px;
-  color: #7777aa;
+  color: #a0a0cc;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -95,8 +95,8 @@ body {
 
 #mode-name {
   display: block;
-  font-size: 14px;
-  color: #6677aa;
+  font-size: 16px;
+  color: #99aadd;
   margin-bottom: 4px;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -114,8 +114,8 @@ body {
 
 #chord-info {
   display: inline-block;
-  font-size: 16px;
-  color: #8899cc;
+  font-size: 18px;
+  color: #aabbee;
   margin-top: 4px;
   font-weight: 500;
 }
@@ -181,7 +181,7 @@ body {
 .progress-item {
   font-size: 15px;
   font-weight: 600;
-  color: #7777aa;
+  color: #b0b0dd;
   padding: 4px 12px;
   background: #16162a;
   border-radius: 6px;
@@ -212,14 +212,14 @@ body {
 }
 
 .stat-label {
-  color: #555577;
+  color: #9090aa;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .stat-value {
-  color: #aaaacc;
+  color: #d0d0ee;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
