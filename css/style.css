@@ -223,6 +223,33 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Strikes */
+.strike-pip {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2a2a3a;
+  border: 1.5px solid #4a4a5a;
+  margin: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.strike-pip.active {
+  background: #c53030;
+  border-color: #f56565;
+  box-shadow: 0 0 6px rgba(245, 101, 101, 0.5);
+}
+
+#fretboard-container.strike-out {
+  animation: strikeFlash 0.3s ease 2;
+}
+
+@keyframes strikeFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* Next button */
 #next-btn {
   display: block;

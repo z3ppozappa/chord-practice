@@ -1,15 +1,21 @@
 // Game logic, state management, scoring, timer
 
+function getDefaultModeIndex(scaleKey) {
+  // major → Ionian (0), harmonicMinor → Harmonic Minor (0), pentatonic → random (null)
+  if (scaleKey === 'pentatonic' || scaleKey === 'random') return null;
+  return 0;
+}
+
 const state = {
   // Settings
   scaleKey: 'major',
-  modeIndex: null,           // null = random (key center mode)
+  modeIndex: 0,              // 0 = Ionian for major (default)
   positionOffset: 0,         // 0 = root (same as key center), -1 = random, 1-6 = offset from key center
   chordDegree: null,         // null = random, 0-6 = specific chord degree
   activeStrings: [true, true, true, true, true, true],
   showModeName: true,
-  showChordName: true,
-  showScaleDegrees: false,   // show scale degree labels on dots
+  showChordName: false,
+  showScaleDegrees: true,    // show scale degree labels on dots
   parentKeyDegrees: false,   // use parent key degrees instead of modal
 
   // Current round
@@ -29,6 +35,7 @@ const state = {
   score: 0,
   streak: 0,
   round: 0,
+  strikes: 0,
 
   // Timer
   sessionStartTime: null,
@@ -103,6 +110,7 @@ function pickRound() {
 function newRound() {
   state.roundComplete = false;
   state.foundIndices = new Set();
+  state.strikes = 0;
   state.round++;
 
   const { scaleKey, keyCenterMode, shapeMode, rootFret, shapeRootFret } = pickRound();
@@ -161,6 +169,9 @@ function newRound() {
 
   // Start timer
   startTimers();
+
+  // Update strikes display
+  updateStrikesDisplay();
 
   // Hide next button
   document.getElementById('next-btn').classList.add('hidden');
@@ -269,9 +280,69 @@ function handleNoteClick(idx, note, group) {
     // Wrong
     state.score = Math.max(0, state.score - 1);
     state.streak = 0;
+    state.strikes++;
     flashDotWrong(dot);
     updateScoreDisplay();
+    updateStrikesDisplay();
+
+    if (state.strikes >= 3) {
+      strikeOut();
+    }
   }
+}
+
+function strikeOut() {
+  // Flash the whole fretboard red briefly, then reset all found progress
+  const container = document.getElementById('fretboard-container');
+  container.classList.add('strike-out');
+
+  // Reveal all chord tones briefly so the user can see what they missed
+  state.dots.forEach(dot => {
+    if (dot.note.chordTone && state.activeStrings[dot.note.string]) {
+      const circle = dot.group.querySelector('.dot-circle');
+      const labelChord = dot.group.querySelector('.dot-label-chord');
+      circle.setAttribute('fill', '#5c1a1a');
+      circle.setAttribute('stroke', '#f56565');
+      labelChord.setAttribute('opacity', '0.6');
+    }
+  });
+
+  // After a delay, reset the round (same chord, same position — try again)
+  setTimeout(() => {
+    container.classList.remove('strike-out');
+    state.foundIndices = new Set();
+    state.strikes = 0;
+
+    // Reset all dots to default appearance
+    state.dots.forEach(dot => {
+      if (state.activeStrings[dot.note.string]) {
+        const circle = dot.group.querySelector('.dot-circle');
+        const labelChord = dot.group.querySelector('.dot-label-chord');
+        const labelDegree = dot.group.querySelector('.dot-label-degree');
+        circle.setAttribute('fill', '#2a2a3a');
+        circle.setAttribute('stroke', '#4a4a5a');
+        circle.setAttribute('stroke-width', '1.5');
+        labelChord.setAttribute('opacity', '0');
+        labelDegree.setAttribute('opacity', '0');
+        dot.group.classList.remove('correct');
+        if (dot.note.chordTone) {
+          dot.group.style.cursor = 'pointer';
+        }
+      }
+    });
+
+    updateProgress();
+    updateStrikesDisplay();
+  }, 1200);
+}
+
+function updateStrikesDisplay() {
+  const el = document.getElementById('strikes');
+  if (!el) return;
+  const indicators = el.querySelectorAll('.strike-pip');
+  indicators.forEach((pip, i) => {
+    pip.classList.toggle('active', i < state.strikes);
+  });
 }
 
 function completeRound() {
@@ -291,13 +362,13 @@ function loadSettings() {
     const saved = JSON.parse(localStorage.getItem('chordGameSettings'));
     if (saved) {
       state.scaleKey = saved.scaleKey || 'major';
-      state.modeIndex = saved.modeIndex !== undefined ? saved.modeIndex : null;
+      state.modeIndex = saved.modeIndex !== undefined ? saved.modeIndex : getDefaultModeIndex(state.scaleKey);
       state.positionOffset = saved.positionOffset !== undefined ? saved.positionOffset : 0;
       state.chordDegree = saved.chordDegree !== undefined ? saved.chordDegree : null;
       state.activeStrings = saved.activeStrings || [true, true, true, true, true, true];
       state.showModeName = saved.showModeName !== undefined ? saved.showModeName : true;
-      state.showChordName = saved.showChordName !== undefined ? saved.showChordName : true;
-      state.showScaleDegrees = saved.showScaleDegrees !== undefined ? saved.showScaleDegrees : false;
+      state.showChordName = saved.showChordName !== undefined ? saved.showChordName : false;
+      state.showScaleDegrees = saved.showScaleDegrees !== undefined ? saved.showScaleDegrees : true;
       state.parentKeyDegrees = saved.parentKeyDegrees !== undefined ? saved.parentKeyDegrees : false;
     }
   } catch (e) { /* ignore */ }

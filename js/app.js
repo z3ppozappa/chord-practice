@@ -20,6 +20,7 @@ function initSettingsUI() {
   scaleSelect.value = state.scaleKey;
   scaleSelect.addEventListener('change', () => {
     state.scaleKey = scaleSelect.value;
+    state.modeIndex = getDefaultModeIndex(state.scaleKey);
     updateModeOptions();
     updatePositionOptions();
     updateChordOptions();
