@@ -245,11 +245,15 @@ function updatePositionOptions() {
   randOpt.textContent = 'Random';
   posSelect.appendChild(randOpt);
 
-  // Position options depend on the scale and key center
+  // Determine how many positions to show based on the effective scale
   const scaleKey = state.scaleKey;
+  // For a specific scale, use its mode count; for 'random', default to 7 (most common)
+  const effectiveScaleKey = scaleKey !== 'random' ? scaleKey : 'major';
+  const def = SCALE_DEFS[effectiveScaleKey];
+  const numModes = def.modes.length;
+
   if (scaleKey !== 'random' && state.modeIndex !== null) {
-    const def = SCALE_DEFS[scaleKey];
-    const numModes = def.modes.length;
+    // Key center is fixed: show position offsets with mode shape names
     for (let offset = 1; offset < numModes; offset++) {
       const shapeModeIdx = (state.modeIndex + offset) % numModes;
       const opt = document.createElement('option');
@@ -257,11 +261,18 @@ function updatePositionOptions() {
       opt.textContent = `Pos ${offset + 1} — ${def.modes[shapeModeIdx]}`;
       posSelect.appendChild(opt);
     }
+  } else {
+    // Key center is random: show generic position numbers
+    for (let offset = 1; offset < numModes; offset++) {
+      const opt = document.createElement('option');
+      opt.value = offset;
+      opt.textContent = `Position ${offset + 1}`;
+      posSelect.appendChild(opt);
+    }
   }
 
   // Restore selection
   posSelect.value = state.positionOffset;
-  // If the value wasn't found (e.g., offset out of range after scale change), reset to root
   if (posSelect.value !== String(state.positionOffset)) {
     state.positionOffset = 0;
     posSelect.value = '0';
@@ -278,9 +289,9 @@ function updateChordOptions() {
   randOpt.textContent = 'Random';
   chordSelect.appendChild(randOpt);
 
-  // Show specific chords when key center is fixed and scale is not random
   const scaleKey = state.scaleKey;
   if (scaleKey !== 'random' && state.modeIndex !== null) {
+    // Key center is fixed: show actual chord numerals
     const chords = getAvailableChords(scaleKey, state.modeIndex);
     chords.forEach((chord, idx) => {
       const opt = document.createElement('option');
@@ -288,6 +299,18 @@ function updateChordOptions() {
       opt.textContent = chord.romanNumeral;
       chordSelect.appendChild(opt);
     });
+  } else {
+    // Key center is random: show generic degree numbers
+    const effectiveScaleKey = scaleKey !== 'random' ? scaleKey : 'major';
+    const numDegrees = SCALE_DEFS[effectiveScaleKey].intervals.length;
+    // For pentatonic, only 2 chords are available; for 7-note scales, 7
+    const numChords = effectiveScaleKey === 'pentatonic' ? 2 : numDegrees;
+    for (let i = 0; i < numChords; i++) {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `Degree ${i + 1}`;
+      chordSelect.appendChild(opt);
+    }
   }
 
   // Restore selection
