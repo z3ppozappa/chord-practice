@@ -140,7 +140,7 @@ body {
 
 /* Note dots */
 .note-dot {
-  transition: transform 0.15s ease;
+  transition: transform 0.1s ease;
 }
 
 .note-dot:hover .dot-circle {
@@ -148,25 +148,24 @@ body {
 }
 
 .note-dot.correct {
-  animation: pop 0.3s ease;
+  animation: pop 0.15s ease;
 }
 
 .note-dot.wrong {
-  animation: shake 0.35s ease;
+  animation: shake 0.2s ease;
 }
 
 @keyframes pop {
   0% { transform: scale(1); }
-  40% { transform: scale(1.25); }
+  50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-4px); }
-  40% { transform: translateX(4px); }
-  60% { transform: translateX(-3px); }
-  80% { transform: translateX(3px); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
 }
 
 /* Progress tracker */

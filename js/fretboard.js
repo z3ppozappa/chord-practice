@@ -196,11 +196,11 @@ function markDotCorrect(dot, showDegree) {
   const isRoot = dot.note.chordTone === 'root';
 
   if (isRoot) {
-    circle.setAttribute('fill', '#333345');
-    circle.setAttribute('stroke', '#6a6a8a');
-    circle.setAttribute('stroke-width', '2.5');
-    labelChord.setAttribute('fill', '#b0b0cc');
-    labelDegree.setAttribute('fill', '#8888aa');
+    circle.setAttribute('fill', '#1a6b3a');
+    circle.setAttribute('stroke', '#38d878');
+    circle.setAttribute('stroke-width', '3');
+    labelChord.setAttribute('fill', '#c0ffd8');
+    labelDegree.setAttribute('fill', '#80d0a0');
   } else {
     circle.setAttribute('fill', '#1a5c3a');
     circle.setAttribute('stroke', '#48bb78');
