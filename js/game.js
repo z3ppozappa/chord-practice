@@ -12,10 +12,11 @@ const state = {
   currentScale: null,
   currentMode: null,
   currentRootFret: null,
+  currentChordInfo: null,
   pattern: [],
   dots: [],
-  chordToneIndices: [],   // indices of chord tones to find (on active strings)
-  foundIndices: new Set(), // indices already found
+  chordToneIndices: [],
+  foundIndices: new Set(),
   roundComplete: false,
 
   // Scoring
@@ -76,7 +77,11 @@ function pickRound() {
   const range = getValidFretRange(scaleKey, modeIndex);
   const rootFret = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
 
-  return { scaleKey, modeIndex, rootFret };
+  // Pick a random diatonic chord degree
+  const numDegrees = SCALE_DEFS[scaleKey].intervals.length;
+  const chordDegree = Math.floor(Math.random() * numDegrees);
+
+  return { scaleKey, modeIndex, rootFret, chordDegree };
 }
 
 function newRound() {
@@ -84,18 +89,22 @@ function newRound() {
   state.foundIndices = new Set();
   state.round++;
 
-  const { scaleKey, modeIndex, rootFret } = pickRound();
+  const { scaleKey, modeIndex, rootFret, chordDegree } = pickRound();
   state.currentScale = scaleKey;
   state.currentMode = modeIndex;
   state.currentRootFret = rootFret;
 
-  state.pattern = computePattern(scaleKey, modeIndex, rootFret);
+  // Get chord info for the randomly chosen diatonic chord
+  state.currentChordInfo = getDiatonicChord(scaleKey, modeIndex, chordDegree);
 
-  // Identify chord tone indices to find (only on active strings, exclude roots)
+  // Compute pattern and mark chord tones
+  state.pattern = computePattern(scaleKey, modeIndex, rootFret);
+  markChordTones(state.pattern, state.currentChordInfo);
+
+  // Identify chord tone indices to find (on active strings)
   state.chordToneIndices = [];
   state.pattern.forEach((note, idx) => {
-    if (state.activeStrings[note.string] &&
-        note.chordTone) {
+    if (state.activeStrings[note.string] && note.chordTone) {
       state.chordToneIndices.push(idx);
     }
   });
@@ -118,9 +127,9 @@ function newRound() {
 
 function updatePrompt(scaleKey, modeIndex, rootFret) {
   const modeName = SCALE_DEFS[scaleKey].modes[modeIndex];
-  const rootNote = getRootNoteName(rootFret);
-  const chordInfo = getChordInfo(scaleKey, modeIndex);
-  const chordName = rootNote + chordInfo.quality;
+  const chordInfo = state.currentChordInfo;
+  const chordRootName = getChordRootName(rootFret, chordInfo.rootSemitones);
+  const chordName = chordRootName + chordInfo.quality;
   const numeral = chordInfo.romanNumeral;
 
   const modeEl = document.getElementById('mode-name');
@@ -136,19 +145,23 @@ function updatePrompt(scaleKey, modeIndex, rootFret) {
   }
 
   // Build chord tone type labels for the prompt
-  const toneTypes = new Set();
+  const toneLabels = [];
+  const seen = new Set();
   state.chordToneIndices.forEach(idx => {
-    toneTypes.add(state.pattern[idx].label);
+    const label = state.pattern[idx].label;
+    if (!seen.has(label)) {
+      seen.add(label);
+      toneLabels.push(label);
+    }
   });
-  const toneList = [...toneTypes].join(', ');
   document.getElementById('find-prompt').textContent =
-    toneTypes.size > 0 ? `Find the ${toneList}` : 'No chord tones on these strings';
+    toneLabels.length > 0 ? `Find the ${toneLabels.join(', ')}` : 'No chord tones on these strings';
 }
 
 function updateProgress() {
   const progressEl = document.getElementById('progress');
 
-  // Count by chord tone type
+  // Count by chord tone label
   const counts = {};
   state.chordToneIndices.forEach(idx => {
     const note = state.pattern[idx];
@@ -179,7 +192,7 @@ function updateRoundDisplay() {
 
 function handleNoteClick(idx, note, group) {
   if (state.roundComplete) return;
-  if (state.foundIndices.has(idx)) return; // already found
+  if (state.foundIndices.has(idx)) return;
 
   const dot = state.dots.find(d => d.index === idx);
   if (!dot) return;
@@ -193,7 +206,6 @@ function handleNoteClick(idx, note, group) {
     updateProgress();
     updateScoreDisplay();
 
-    // Check if round complete
     if (state.foundIndices.size === state.chordToneIndices.length) {
       completeRound();
     }
@@ -213,7 +225,6 @@ function completeRound() {
   const roundTimeEl = document.getElementById('round-timer');
   roundTimeEl.textContent = formatTime(state.lastRoundTime);
 
-  // Show completion message
   const nextBtn = document.getElementById('next-btn');
   nextBtn.classList.remove('hidden');
   nextBtn.focus();

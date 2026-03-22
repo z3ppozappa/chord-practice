@@ -27,9 +27,6 @@ const NOTE_NAMES = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A'
 const STRING_SEMITONES = [24, 19, 15, 10, 5, 0];
 const STRING_LABELS = ['e', 'B', 'G', 'D', 'A', 'E'];
 
-// Pentatonic modes map to these parent major scale degrees (for roman numerals)
-const PENTATONIC_NUMERALS = ['I', 'ii', 'iii', 'V', 'vi'];
-
 function getModeIntervals(scaleKey, modeIndex) {
   const base = SCALE_DEFS[scaleKey].intervals;
   const n = base.length;
@@ -41,57 +38,52 @@ function getModeIntervals(scaleKey, modeIndex) {
   return intervals;
 }
 
-// Get chord info for a mode: which degree indices are chord tones, quality, roman numeral
-function getChordInfo(scaleKey, modeIndex) {
+// Get a diatonic chord built on any degree of the current mode.
+// chordDegree is 0-indexed (0 = I chord, 1 = ii chord, etc.)
+// Returns which scale degree indices belong to the chord, their labels, quality, numeral.
+function getDiatonicChord(scaleKey, modeIndex, chordDegree) {
   const intervals = getModeIntervals(scaleKey, modeIndex);
   const numNotes = intervals.length;
 
-  if (numNotes === 7) {
-    // For 7-note scales, chord tones are always at degree indices 2, 4, 6 (3rd, 5th, 7th)
-    const third = intervals[2];
-    const fifth = intervals[4];
-    const seventh = intervals[6];
-
-    return {
-      chordDegreeIndices: [2, 4, 6],
-      third, fifth, seventh,
-      quality: computeQuality(third, fifth, seventh),
-      romanNumeral: computeRoman(modeIndex, third, fifth)
-    };
+  // Build chord by stacking thirds (every other scale degree)
+  // 7-note scales: 4-note chords (R, 3, 5, 7)
+  // 5-note scales: 3-note chords (R, 3, 5) — no clean 7th available
+  const chordSize = numNotes === 7 ? 4 : 3;
+  const chordIndices = [];
+  for (let i = 0; i < chordSize; i++) {
+    chordIndices.push((chordDegree + i * 2) % numNotes);
   }
 
-  if (scaleKey === 'pentatonic') {
-    // Determine which pentatonic indices correspond to chord tones by interval
-    const chordDegreeIndices = [];
-    let third, fifth, seventh;
+  // Compute intervals relative to chord root
+  const rootInterval = intervals[chordDegree];
+  const relativeIntervals = chordIndices.map(idx =>
+    (intervals[idx] - rootInterval + 12) % 12
+  );
 
-    for (let i = 1; i < numNotes; i++) {
-      const interval = intervals[i];
-      if ((interval === 3 || interval === 4) && third === undefined) {
-        third = interval;
-        chordDegreeIndices.push(i);
-      } else if (interval === 7 && fifth === undefined) {
-        fifth = interval;
-        chordDegreeIndices.push(i);
-      } else if ((interval === 10 || interval === 11) && seventh === undefined) {
-        seventh = interval;
-        chordDegreeIndices.push(i);
-      }
-    }
+  // Build labels and types for each chord tone degree
+  const degreeLabels = {};
+  const degreeToneTypes = {};
+  chordIndices.forEach((degIdx, i) => {
+    const rel = relativeIntervals[i];
+    degreeLabels[degIdx] = i === 0 ? 'R' : getChordToneLabel(rel);
+    degreeToneTypes[degIdx] = i === 0 ? 'root' : getChordToneType(rel);
+  });
 
-    return {
-      chordDegreeIndices,
-      third, fifth, seventh,
-      quality: computeQuality(third, fifth, seventh),
-      romanNumeral: PENTATONIC_NUMERALS[modeIndex]
-    };
-  }
+  const third = relativeIntervals[1];
+  const fifth = relativeIntervals[2];
+  const seventh = chordSize >= 4 ? relativeIntervals[3] : undefined;
 
-  return { chordDegreeIndices: [], quality: '', romanNumeral: '' };
+  return {
+    chordDegreeIndices: chordIndices,
+    degreeLabels,
+    degreeToneTypes,
+    quality: computeQuality(third, fifth, seventh),
+    romanNumeral: computeRoman(chordDegree, third, fifth),
+    rootSemitones: rootInterval
+  };
 }
 
 function computeQuality(third, fifth, seventh) {
-  // Full 7th chords
   if (third === 4 && fifth === 7 && seventh === 11) return 'maj7';
   if (third === 4 && fifth === 7 && seventh === 10) return '7';
   if (third === 3 && fifth === 7 && seventh === 10) return 'm7';
@@ -100,27 +92,27 @@ function computeQuality(third, fifth, seventh) {
   if (third === 3 && fifth === 7 && seventh === 11) return 'mMaj7';
   if (third === 4 && fifth === 8 && seventh === 11) return 'maj7♯5';
   if (third === 4 && fifth === 8 && seventh === 10) return '7♯5';
-  // Incomplete chords (pentatonic)
-  if (third === 3 && fifth === 7) return 'm';
+  // Triads (pentatonic)
   if (third === 4 && fifth === 7) return '';
-  if (third === 3 && seventh === 10) return 'm';
-  if (fifth === 7 && seventh === 10) return '7sus';
-  if (fifth === 7 && !third && !seventh) return '5';
-  if (third === 4 && !fifth && !seventh) return '';
-  if (third === 3 && !fifth && !seventh) return 'm';
+  if (third === 3 && fifth === 7) return 'm';
+  if (third === 3 && fifth === 6) return '°';
+  if (third === 4 && fifth === 8) return '+';
+  // Unusual pentatonic stacks
+  if (third === 3 && fifth === 8) return 'm(♯5)';
+  if (third === 2 && fifth === 7) return 'sus2';
+  if (third === 5 && fifth === 7) return 'sus4';
   return '';
 }
 
 function computeRoman(degreeIndex, third, fifth) {
   const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII'];
-  let numeral = numerals[degreeIndex];
-  if (third === 3) numeral = numeral.toLowerCase();
+  let numeral = numerals[degreeIndex] || (degreeIndex + 1).toString();
+  if (third === 3 || third === 2) numeral = numeral.toLowerCase();
   if (fifth === 6) numeral += '°';
   if (fifth === 8) numeral += '+';
   return numeral;
 }
 
-// Returns display label for a chord tone interval
 function getChordToneLabel(interval) {
   const i = ((interval % 12) + 12) % 12;
   switch (i) {
@@ -133,30 +125,30 @@ function getChordToneLabel(interval) {
     case 9: return '𝄫7';
     case 10: return '♭7';
     case 11: return '7';
+    case 2: return '2';
+    case 5: return '4';
     default: return '';
   }
 }
 
-// Returns chord tone type for display grouping
 function getChordToneType(interval) {
   const i = ((interval % 12) + 12) % 12;
   if (i === 0) return 'root';
-  if (i === 3 || i === 4) return '3rd';
+  if (i === 2 || i === 3 || i === 4 || i === 5) return '3rd';
   if (i === 6 || i === 7 || i === 8) return '5th';
   if (i === 9 || i === 10 || i === 11) return '7th';
   return null;
 }
 
-// Compute NPS pattern for a given scale/mode/rootFret
+// Compute NPS pattern — just positions and degree indices, no chord tone assignment
 function computePattern(scaleKey, modeIndex, rootFret) {
   const intervals = getModeIntervals(scaleKey, modeIndex);
   const nps = SCALE_DEFS[scaleKey].notesPerString;
   const numNotes = intervals.length;
-  const chordInfo = getChordInfo(scaleKey, modeIndex);
   const notes = [];
 
   for (let s = 0; s < 6; s++) {
-    const stringIdx = 5 - s; // start from low E (5) up to high e (0)
+    const stringIdx = 5 - s;
     for (let n = 0; n < nps; n++) {
       const noteIndex = s * nps + n;
       const degreeIdx = noteIndex % numNotes;
@@ -164,24 +156,13 @@ function computePattern(scaleKey, modeIndex, rootFret) {
       const semitones = intervals[degreeIdx] + octave * 12;
       const fret = rootFret + semitones - STRING_SEMITONES[stringIdx];
 
-      let chordTone = null;
-      let label = '';
-
-      if (degreeIdx === 0) {
-        chordTone = 'root';
-        label = 'R';
-      } else if (chordInfo.chordDegreeIndices.includes(degreeIdx)) {
-        chordTone = getChordToneType(intervals[degreeIdx]);
-        label = getChordToneLabel(intervals[degreeIdx]);
-      }
-
       notes.push({
         string: stringIdx,
         fret,
         interval: intervals[degreeIdx],
         degreeIndex: degreeIdx,
-        chordTone,
-        label,
+        chordTone: null,
+        label: '',
         id: `s${stringIdx}f${fret}`
       });
     }
@@ -190,8 +171,25 @@ function computePattern(scaleKey, modeIndex, rootFret) {
   return notes;
 }
 
+// Mark chord tones in a pattern based on a diatonic chord
+function markChordTones(pattern, chordInfo) {
+  pattern.forEach(note => {
+    if (chordInfo.chordDegreeIndices.includes(note.degreeIndex)) {
+      note.chordTone = chordInfo.degreeToneTypes[note.degreeIndex];
+      note.label = chordInfo.degreeLabels[note.degreeIndex];
+    } else {
+      note.chordTone = null;
+      note.label = '';
+    }
+  });
+}
+
 function getRootNoteName(rootFret) {
-  return NOTE_NAMES[(4 + rootFret) % 12]; // low E open = E = semitone 4
+  return NOTE_NAMES[(4 + rootFret) % 12];
+}
+
+function getChordRootName(rootFret, chordRootSemitones) {
+  return NOTE_NAMES[(4 + rootFret + chordRootSemitones) % 12];
 }
 
 function getValidFretRange(scaleKey, modeIndex) {
