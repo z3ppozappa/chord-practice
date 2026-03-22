@@ -147,20 +147,20 @@ function updatePrompt(scaleKey, modeIndex, rootFret) {
   modeEl.textContent = modeName;
   modeEl.classList.toggle('hidden', !state.showModeName);
 
-  // Merged prompt: "Find iv (Dm)" or just "Find the chord tones"
+  // Merged prompt: always show chord, optionally hide name
   const findEl = document.getElementById('find-prompt');
   if (state.chordToneIndices.length === 0) {
     findEl.textContent = 'No chord tones on these strings';
   } else if (state.showChordName) {
     findEl.textContent = `Find ${numeral} (${chordName})`;
   } else {
-    findEl.textContent = 'Find the chord tones';
+    findEl.textContent = `Find ${numeral}`;
   }
 
   // Parent key info
   const parentEl = document.getElementById('parent-key-info');
   if (parentEl) {
-    if (state.parentKeyDegrees && state.showScaleDegrees && modeIndex > 0) {
+    if (state.parentKeyDegrees) {
       const parentRoot = getParentKeyRootName(rootFret, scaleKey, modeIndex);
       const parentLabel = getParentKeyLabel(scaleKey);
       parentEl.textContent = `Parent: ${parentRoot} ${parentLabel}`;
