@@ -245,6 +245,54 @@ function markChordTones(pattern, chordInfo) {
   });
 }
 
+// Compute scale degree labels for all notes in a pattern.
+// modalDegree: degreeIndex + 1 (1-7, relative to mode root)
+// parentDegree: degree relative to parent key root
+function assignScaleDegrees(pattern, scaleKey, modeIndex) {
+  const numNotes = SCALE_DEFS[scaleKey].intervals.length;
+
+  if (scaleKey === 'pentatonic') {
+    const parentMaps = [
+      [0, 1, 2, 4, 5], // mode 0: major pent → parent degrees 1,2,3,5,6
+      [1, 2, 4, 5, 0],
+      [2, 4, 5, 0, 1],
+      [4, 5, 0, 1, 2],
+      [5, 0, 1, 2, 4], // mode 4: minor pent
+    ];
+    const parentMap = parentMaps[modeIndex];
+    pattern.forEach(note => {
+      note.modalDegree = note.degreeIndex + 1;
+      note.parentDegree = parentMap[note.degreeIndex] + 1;
+    });
+  } else {
+    pattern.forEach(note => {
+      note.modalDegree = note.degreeIndex + 1;
+      note.parentDegree = (note.degreeIndex + modeIndex) % numNotes + 1;
+    });
+  }
+}
+
+// Get the parent key root name
+function getParentKeyRootName(rootFret, scaleKey, modeIndex) {
+  if (scaleKey === 'pentatonic') {
+    // Parent major key: offset by the pentatonic mode's relation to major
+    const parentOffsets = [0, 2, 4, 7, 9]; // semitones of each pent degree in parent major
+    const offsetSemitones = parentOffsets[modeIndex];
+    return NOTE_NAMES[(4 + rootFret - offsetSemitones + 120) % 12];
+  }
+  // For 7-note scales: parent root is modeIndex steps back
+  const intervals = SCALE_DEFS[scaleKey].intervals;
+  const offsetSemitones = intervals[modeIndex];
+  return NOTE_NAMES[(4 + rootFret - offsetSemitones + 120) % 12];
+}
+
+// Get parent key type label
+function getParentKeyLabel(scaleKey) {
+  if (scaleKey === 'major' || scaleKey === 'pentatonic') return 'Major';
+  if (scaleKey === 'harmonicMinor') return 'Harm. Min.';
+  return SCALE_DEFS[scaleKey].name;
+}
+
 function getRootNoteName(rootFret) {
   return NOTE_NAMES[(4 + rootFret) % 12];
 }

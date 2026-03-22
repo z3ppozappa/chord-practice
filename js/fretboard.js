@@ -8,7 +8,7 @@ function createSVGElement(tag, attrs) {
   return el;
 }
 
-function renderFretboard(containerId, pattern, activeStrings, onNoteClick) {
+function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showDegrees) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
@@ -144,21 +144,35 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick) {
 
     group.appendChild(circle);
 
-    // Label (hidden until revealed)
-    const label = createSVGElement('text', {
-      x: cx, y: cy + 5,
+    // Chord function label (centered if no degree, offset up if dual)
+    const chordLabelY = showDegrees ? cy - 1 : cy + 5;
+    const labelChord = createSVGElement('text', {
+      x: cx, y: chordLabelY,
       fill: '#fff',
-      'font-size': '12',
+      'font-size': '11',
       'font-weight': 'bold',
       'font-family': 'system-ui, sans-serif',
       'text-anchor': 'middle',
       'pointer-events': 'none',
-      class: 'dot-label'
+      class: 'dot-label-chord'
     });
+    labelChord.textContent = note.label;
+    labelChord.setAttribute('opacity', '0');
+    group.appendChild(labelChord);
 
-    label.textContent = note.label;
-    label.setAttribute('opacity', '0');
-    group.appendChild(label);
+    // Scale degree label (bottom, hidden until revealed)
+    const labelDegree = createSVGElement('text', {
+      x: cx, y: cy + 11,
+      fill: '#fff',
+      'font-size': '9',
+      'font-family': 'system-ui, sans-serif',
+      'text-anchor': 'middle',
+      'pointer-events': 'none',
+      class: 'dot-label-degree'
+    });
+    labelDegree.textContent = '';
+    labelDegree.setAttribute('opacity', '0');
+    group.appendChild(labelDegree);
 
     if (active && note.chordTone) {
       group.style.cursor = 'pointer';
@@ -168,31 +182,37 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick) {
     }
 
     svg.appendChild(group);
-    dots.push({ group, circle, label, note, index: idx });
+    dots.push({ group, circle, labelChord, labelDegree, note, index: idx });
   });
 
   container.appendChild(svg);
   return dots;
 }
 
-function markDotCorrect(dot) {
+function markDotCorrect(dot, showDegree) {
   const circle = dot.group.querySelector('.dot-circle');
-  const label = dot.group.querySelector('.dot-label');
+  const labelChord = dot.group.querySelector('.dot-label-chord');
+  const labelDegree = dot.group.querySelector('.dot-label-degree');
   const isRoot = dot.note.chordTone === 'root';
 
   if (isRoot) {
     circle.setAttribute('fill', '#333345');
     circle.setAttribute('stroke', '#6a6a8a');
     circle.setAttribute('stroke-width', '2.5');
-    label.setAttribute('fill', '#b0b0cc');
+    labelChord.setAttribute('fill', '#b0b0cc');
+    labelDegree.setAttribute('fill', '#8888aa');
   } else {
     circle.setAttribute('fill', '#1a5c3a');
     circle.setAttribute('stroke', '#48bb78');
     circle.setAttribute('stroke-width', '2.5');
-    label.setAttribute('fill', '#a8f0c8');
+    labelChord.setAttribute('fill', '#a8f0c8');
+    labelDegree.setAttribute('fill', '#70c8a0');
   }
 
-  label.setAttribute('opacity', '1');
+  labelChord.setAttribute('opacity', '1');
+  if (showDegree) {
+    labelDegree.setAttribute('opacity', '1');
+  }
   dot.group.classList.add('correct');
   dot.group.style.cursor = 'default';
 }

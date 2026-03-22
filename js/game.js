@@ -7,6 +7,8 @@ const state = {
   activeStrings: [true, true, true, true, true, true],
   showModeName: true,
   showChordName: true,
+  showScaleDegrees: false,   // show scale degree labels on dots
+  parentKeyDegrees: false,   // use parent key degrees instead of modal
 
   // Current round
   currentScale: null,
@@ -97,6 +99,7 @@ function newRound() {
   // Compute pattern and mark chord tones
   state.pattern = computePattern(scaleKey, modeIndex, rootFret);
   markChordTones(state.pattern, state.currentChordInfo);
+  assignScaleDegrees(state.pattern, scaleKey, modeIndex);
 
   // Identify chord tone indices to find (on active strings)
   state.chordToneIndices = [];
@@ -107,7 +110,18 @@ function newRound() {
   });
 
   // Render fretboard
-  state.dots = renderFretboard('fretboard-container', state.pattern, state.activeStrings, handleNoteClick);
+  state.dots = renderFretboard('fretboard-container', state.pattern, state.activeStrings, handleNoteClick, state.showScaleDegrees);
+
+  // Set scale degree text on dots
+  if (state.showScaleDegrees) {
+    const useParent = state.parentKeyDegrees;
+    state.dots.forEach(dot => {
+      if (dot.note.chordTone) {
+        const deg = useParent ? dot.note.parentDegree : dot.note.modalDegree;
+        dot.labelDegree.textContent = deg;
+      }
+    });
+  }
 
   // Update prompt
   updatePrompt(scaleKey, modeIndex, rootFret);
@@ -133,21 +147,28 @@ function updatePrompt(scaleKey, modeIndex, rootFret) {
   modeEl.textContent = modeName;
   modeEl.classList.toggle('hidden', !state.showModeName);
 
-  const chordEl = document.getElementById('chord-info');
-  if (state.showChordName) {
-    chordEl.textContent = `${numeral}  (${chordName})`;
-    chordEl.classList.remove('hidden');
+  // Merged prompt: "Find iv (Dm)" or just "Find the chord tones"
+  const findEl = document.getElementById('find-prompt');
+  if (state.chordToneIndices.length === 0) {
+    findEl.textContent = 'No chord tones on these strings';
+  } else if (state.showChordName) {
+    findEl.textContent = `Find ${numeral} (${chordName})`;
   } else {
-    chordEl.classList.add('hidden');
+    findEl.textContent = 'Find the chord tones';
   }
 
-  // Build chord tone labels in R, 3, 5 order
-  const toneOrder = ['R', '3', '♭3', '5', '♭5', '♯5'];
-  const present = new Set();
-  state.chordToneIndices.forEach(idx => present.add(state.pattern[idx].label));
-  const toneLabels = toneOrder.filter(l => present.has(l));
-  document.getElementById('find-prompt').textContent =
-    toneLabels.length > 0 ? `Find the ${toneLabels.join(', ')}` : 'No chord tones on these strings';
+  // Parent key info
+  const parentEl = document.getElementById('parent-key-info');
+  if (parentEl) {
+    if (state.parentKeyDegrees && state.showScaleDegrees && modeIndex > 0) {
+      const parentRoot = getParentKeyRootName(rootFret, scaleKey, modeIndex);
+      const parentLabel = getParentKeyLabel(scaleKey);
+      parentEl.textContent = `Parent: ${parentRoot} ${parentLabel}`;
+      parentEl.classList.remove('hidden');
+    } else {
+      parentEl.classList.add('hidden');
+    }
+  }
 }
 
 function updateProgress() {
@@ -194,7 +215,7 @@ function handleNoteClick(idx, note, group) {
     state.foundIndices.add(idx);
     state.score++;
     state.streak++;
-    markDotCorrect(dot);
+    markDotCorrect(dot, state.showScaleDegrees);
     updateProgress();
     updateScoreDisplay();
 
@@ -231,6 +252,8 @@ function loadSettings() {
       state.activeStrings = saved.activeStrings || [true, true, true, true, true, true];
       state.showModeName = saved.showModeName !== undefined ? saved.showModeName : true;
       state.showChordName = saved.showChordName !== undefined ? saved.showChordName : true;
+      state.showScaleDegrees = saved.showScaleDegrees !== undefined ? saved.showScaleDegrees : false;
+      state.parentKeyDegrees = saved.parentKeyDegrees !== undefined ? saved.parentKeyDegrees : false;
     }
   } catch (e) { /* ignore */ }
 }
@@ -241,7 +264,9 @@ function saveSettings() {
     modeIndex: state.modeIndex,
     activeStrings: state.activeStrings,
     showModeName: state.showModeName,
-    showChordName: state.showChordName
+    showChordName: state.showChordName,
+    showScaleDegrees: state.showScaleDegrees,
+    parentKeyDegrees: state.parentKeyDegrees
   }));
 }
 

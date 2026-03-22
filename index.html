@@ -36,6 +36,8 @@
       <div class="settings-row">
         <label><input type="checkbox" id="show-mode" checked> Show mode name</label>
         <label><input type="checkbox" id="show-chord" checked> Show chord name</label>
+        <label><input type="checkbox" id="show-degrees"> Scale degrees</label>
+        <label><input type="checkbox" id="parent-key-degrees"> Parent key</label>
         <div id="custom-strings" class="hidden"></div>
       </div>
     </header>
@@ -43,8 +45,8 @@
     <main id="game">
       <div id="prompt">
         <span id="mode-name"></span>
+        <span id="parent-key-info" class="hidden"></span>
         <div id="find-prompt"></div>
-        <span id="chord-info"></span>
       </div>
 
       <div id="fretboard-container"></div>

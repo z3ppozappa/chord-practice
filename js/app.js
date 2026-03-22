@@ -82,7 +82,28 @@ function initSettingsUI() {
   showChord.addEventListener('change', () => {
     state.showChordName = showChord.checked;
     saveSettings();
-    document.getElementById('chord-info').classList.toggle('hidden', !state.showChordName);
+    newRound();
+  });
+
+  const showDegrees = document.getElementById('show-degrees');
+  showDegrees.checked = state.showScaleDegrees;
+  showDegrees.addEventListener('change', () => {
+    state.showScaleDegrees = showDegrees.checked;
+    saveSettings();
+    newRound();
+  });
+
+  const parentKey = document.getElementById('parent-key-degrees');
+  parentKey.checked = state.parentKeyDegrees;
+  parentKey.addEventListener('change', () => {
+    state.parentKeyDegrees = parentKey.checked;
+    // Auto-enable scale degrees when parent key is turned on
+    if (parentKey.checked && !state.showScaleDegrees) {
+      state.showScaleDegrees = true;
+      showDegrees.checked = true;
+    }
+    saveSettings();
+    newRound();
   });
 
   // Next button

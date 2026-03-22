@@ -112,15 +112,15 @@ body {
   color: #e0e0f0;
 }
 
-#chord-info {
-  display: inline-block;
-  font-size: 18px;
-  color: #aabbee;
-  margin-top: 4px;
-  font-weight: 500;
+#parent-key-info {
+  display: block;
+  font-size: 13px;
+  color: #8899bb;
+  margin-bottom: 2px;
+  letter-spacing: 0.5px;
 }
 
-#chord-info.hidden {
+#parent-key-info.hidden {
   display: none;
 }
 
