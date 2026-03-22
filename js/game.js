@@ -118,11 +118,10 @@ function newRound() {
 
 function updatePrompt(scaleKey, modeIndex, rootFret) {
   const modeName = SCALE_DEFS[scaleKey].modes[modeIndex];
-  const intervals = getModeIntervals(scaleKey, modeIndex);
   const rootNote = getRootNoteName(rootFret);
-  const quality = getChordQuality(intervals);
-  const numeral = getRomanNumeral(scaleKey, modeIndex);
-  const chordName = rootNote + quality;
+  const chordInfo = getChordInfo(scaleKey, modeIndex);
+  const chordName = rootNote + chordInfo.quality;
+  const numeral = chordInfo.romanNumeral;
 
   const modeEl = document.getElementById('mode-name');
   modeEl.textContent = modeName;

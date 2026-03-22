@@ -27,6 +27,21 @@ function initSettingsUI() {
 
   // Mode selector
   updateModeOptions();
+  document.getElementById('mode-select').addEventListener('change', () => {
+    const val = document.getElementById('mode-select').value;
+    if (val === 'random') {
+      state.modeIndex = null;
+    } else if (val.includes(':')) {
+      const [key, idx] = val.split(':');
+      state.scaleKey = key;
+      state.modeIndex = parseInt(idx);
+      document.getElementById('scale-select').value = key;
+    } else {
+      state.modeIndex = parseInt(val);
+    }
+    saveSettings();
+    newRound();
+  });
 
   // String preset selector
   const stringPreset = document.getElementById('string-preset');
@@ -113,23 +128,6 @@ function updateModeOptions() {
     modeSelect.value = 'random';
   }
 
-  modeSelect.addEventListener('change', () => {
-    const val = modeSelect.value;
-    if (val === 'random') {
-      state.modeIndex = null;
-      state.scaleKey = state.scaleKey; // keep current
-    } else if (val.includes(':')) {
-      // Grouped mode from "random" scale
-      const [key, idx] = val.split(':');
-      state.scaleKey = key;
-      state.modeIndex = parseInt(idx);
-      document.getElementById('scale-select').value = key;
-    } else {
-      state.modeIndex = parseInt(val);
-    }
-    saveSettings();
-    newRound();
-  });
 }
 
 function initStringCheckboxes() {
