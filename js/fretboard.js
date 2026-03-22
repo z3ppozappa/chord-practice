@@ -136,10 +136,6 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick) {
       circle.setAttribute('stroke', '#2a2a3a');
       circle.setAttribute('stroke-width', '1');
       circle.setAttribute('opacity', '0.3');
-    } else if (note.chordTone === 'root') {
-      circle.setAttribute('fill', '#333345');
-      circle.setAttribute('stroke', '#6a6a8a');
-      circle.setAttribute('stroke-width', '2.5');
     } else {
       circle.setAttribute('fill', '#2a2a3a');
       circle.setAttribute('stroke', '#4a4a5a');
@@ -182,11 +178,21 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick) {
 function markDotCorrect(dot) {
   const circle = dot.group.querySelector('.dot-circle');
   const label = dot.group.querySelector('.dot-label');
-  circle.setAttribute('fill', '#1a5c3a');
-  circle.setAttribute('stroke', '#48bb78');
-  circle.setAttribute('stroke-width', '2.5');
+  const isRoot = dot.note.chordTone === 'root';
+
+  if (isRoot) {
+    circle.setAttribute('fill', '#333345');
+    circle.setAttribute('stroke', '#6a6a8a');
+    circle.setAttribute('stroke-width', '2.5');
+    label.setAttribute('fill', '#b0b0cc');
+  } else {
+    circle.setAttribute('fill', '#1a5c3a');
+    circle.setAttribute('stroke', '#48bb78');
+    circle.setAttribute('stroke-width', '2.5');
+    label.setAttribute('fill', '#a8f0c8');
+  }
+
   label.setAttribute('opacity', '1');
-  label.setAttribute('fill', '#a8f0c8');
   dot.group.classList.add('correct');
   dot.group.style.cursor = 'default';
 }
