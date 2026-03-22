@@ -9,7 +9,7 @@
 <body>
   <div id="app">
     <header id="settings">
-      <div class="settings-row">
+      <div class="settings-grid">
         <label>Scale
           <select id="scale-select">
             <option value="major">Major</option>
@@ -44,12 +44,12 @@
           </select>
         </label>
       </div>
+      <div id="custom-strings" class="hidden"></div>
       <div class="settings-row">
         <label><input type="checkbox" id="show-mode" checked> Show mode name</label>
         <label><input type="checkbox" id="show-chord" checked> Show chord name</label>
         <label><input type="checkbox" id="show-degrees"> Scale degrees</label>
         <label><input type="checkbox" id="parent-key-degrees"> Parent key</label>
-        <div id="custom-strings" class="hidden"></div>
       </div>
     </header>
 
