@@ -21,7 +21,7 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showD
   const numSpaces = lastWireFret - firstWireFret;
   const numWires = numSpaces + 1;
 
-  const pad = { top: 35, bottom: 45, left: 45, right: 25 };
+  const pad = { top: 35, bottom: 55, left: 45, right: 25 };
   const stringSpacing = 36;
   const fretSpacing = 65;
   const width = pad.left + numSpaces * fretSpacing + pad.right;
@@ -89,21 +89,6 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showD
       'text-anchor': 'middle'
     });
     label.textContent = STRING_LABELS[s];
-    svg.appendChild(label);
-  }
-
-  // Fret numbers
-  for (let i = 0; i < numSpaces; i++) {
-    const fretNum = firstWireFret + i + 1;
-    const x = pad.left + (i + 0.5) * fretSpacing;
-    const label = createSVGElement('text', {
-      x, y: pad.top + 5 * stringSpacing + 22,
-      fill: '#555',
-      'font-size': '11',
-      'font-family': 'system-ui, sans-serif',
-      'text-anchor': 'middle'
-    });
-    label.textContent = fretNum;
     svg.appendChild(label);
   }
 
@@ -184,6 +169,22 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showD
     svg.appendChild(group);
     dots.push({ group, circle, labelChord, labelDegree, note, index: idx });
   });
+
+  // Fret numbers (rendered after dots so they appear on top)
+  for (let i = 0; i < numSpaces; i++) {
+    const fretNum = firstWireFret + i + 1;
+    const x = pad.left + (i + 0.5) * fretSpacing;
+    const label = createSVGElement('text', {
+      x, y: pad.top + 5 * stringSpacing + 30,
+      fill: '#555',
+      'font-size': '11',
+      'font-family': 'system-ui, sans-serif',
+      'text-anchor': 'middle',
+      'pointer-events': 'none'
+    });
+    label.textContent = fretNum;
+    svg.appendChild(label);
+  }
 
   container.appendChild(svg);
   return dots;
