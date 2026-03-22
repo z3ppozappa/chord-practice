@@ -139,33 +139,8 @@ body {
 }
 
 /* Note dots */
-.note-dot {
-  transition: transform 0.1s ease;
-}
-
 .note-dot:hover .dot-circle {
   filter: brightness(1.3);
-}
-
-.note-dot.correct {
-  animation: pop 0.15s ease;
-}
-
-.note-dot.wrong {
-  animation: shake 0.2s ease;
-}
-
-@keyframes pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-  100% { transform: scale(1); }
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  50% { transform: translateX(3px); }
-  75% { transform: translateX(-2px); }
 }
 
 /* Progress tracker */
