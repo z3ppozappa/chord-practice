@@ -74,7 +74,8 @@ function initSettingsUI() {
       top4:   [true, true, true, true, false, false],
       mid4:   [false, true, true, true, true, false],
       high:   [true, true, true, false, false, false],
-      middle: [false, true, true, true, false, false],
+      highMid: [false, true, true, true, false, false],
+      lowMid: [false, false, true, true, true, false],
       low:    [false, false, false, true, true, true]
     };
     state.activeStrings = presets[val];
@@ -178,7 +179,9 @@ function detectStringPreset() {
   } else if (s[0] && s[1] && s[2] && !s[3] && !s[4] && !s[5]) {
     stringPreset.value = 'high';
   } else if (!s[0] && s[1] && s[2] && s[3] && !s[4] && !s[5]) {
-    stringPreset.value = 'middle';
+    stringPreset.value = 'highMid';
+  } else if (!s[0] && !s[1] && s[2] && s[3] && s[4] && !s[5]) {
+    stringPreset.value = 'lowMid';
   } else if (!s[0] && !s[1] && !s[2] && s[3] && s[4] && s[5]) {
     stringPreset.value = 'low';
   } else {
