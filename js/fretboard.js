@@ -170,14 +170,17 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showD
     dots.push({ group, circle, labelChord, labelDegree, note, index: idx });
   });
 
-  // Fret numbers (rendered after dots so they appear on top)
+  // Fret numbers (only standard marker frets, rendered after dots)
+  const markerFrets = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
   for (let i = 0; i < numSpaces; i++) {
     const fretNum = firstWireFret + i + 1;
+    if (!markerFrets.includes(fretNum)) continue;
     const x = pad.left + (i + 0.5) * fretSpacing;
     const label = createSVGElement('text', {
-      x, y: pad.top + 5 * stringSpacing + 30,
-      fill: '#555',
-      'font-size': '11',
+      x, y: pad.top + 5 * stringSpacing + 32,
+      fill: '#889',
+      'font-size': '13',
+      'font-weight': '600',
       'font-family': 'system-ui, sans-serif',
       'text-anchor': 'middle',
       'pointer-events': 'none'
