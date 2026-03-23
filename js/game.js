@@ -213,13 +213,14 @@ function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
     findEl.textContent = `Find ${numeral}`;
   }
 
-  // Chord list for the key
+  // Chord list for the key (chord names above Roman numerals)
   const chordListEl = document.getElementById('chord-list');
   if (chordListEl) {
     const allChords = getAvailableChords(scaleKey, keyCenterMode);
     chordListEl.innerHTML = allChords.map(c => {
       const active = c.romanNumeral === numeral;
-      return `<span class="chord-item${active ? ' active' : ''}">${c.romanNumeral}</span>`;
+      const name = getChordRootName(rootFret, c.rootSemitones) + c.quality;
+      return `<span class="chord-item${active ? ' active' : ''}"><span class="chord-name">${name}</span><span class="chord-numeral">${c.romanNumeral}</span></span>`;
     }).join(' ');
   }
 
