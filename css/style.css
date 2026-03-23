@@ -211,101 +211,52 @@ body {
   background: #122a1e;
 }
 
-/* Streak display */
-#streak-display {
-  text-align: center;
-  margin-bottom: 12px;
-  transition: transform 0.15s ease;
-}
-
-#streak-display.streak-pulse {
-  transform: scale(1.03);
-}
-
-.streak-header {
+/* Badges */
+#badges {
   display: flex;
-  align-items: center;
   justify-content: center;
   gap: 8px;
-  margin-bottom: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+  min-height: 0;
 }
 
-.streak-label {
-  font-size: 11px;
-  color: #7080aa;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.streak-num {
-  font-size: 22px;
-  font-weight: 700;
-  color: #d0d0ee;
-  font-variant-numeric: tabular-nums;
-  min-width: 28px;
-}
-
-.streak-best {
-  font-size: 11px;
-  color: #606080;
-  margin-left: 4px;
-}
-
-.streak-badge {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 10px;
-  letter-spacing: 1px;
+.badge {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
   animation: badgePop 0.3s ease;
 }
 
-.streak-badge.hidden {
-  display: none;
-}
-
-.streak-badge.tier-nice {
-  color: #68d391;
-  background: #1a3a2a;
-  border: 1px solid #2a5a3a;
-}
-
-.streak-badge.tier-hot {
+.badge-streak {
   color: #f6ad55;
-  background: #3a2a1a;
+  background: #2a2218;
   border: 1px solid #5a3a1a;
 }
 
-.streak-badge.tier-blazing {
-  color: #fc8181;
-  background: #3a1a1a;
-  border: 1px solid #5a2a2a;
-}
-
-.streak-badge.tier-fire {
-  color: #fff;
-  background: linear-gradient(135deg, #c53030, #dd6b20);
-  border: 1px solid #e53e3e;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-}
-
-.streak-badge.tier-legendary {
-  color: #fefcbf;
-  background: linear-gradient(135deg, #d69e2e, #dd6b20, #c53030);
-  border: 1px solid #ecc94b;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
-  animation: badgePop 0.3s ease, legendaryGlow 1.5s ease-in-out infinite alternate;
+.badge-speed {
+  color: #68d391;
+  background: #1a2a20;
+  border: 1px solid #2a5a3a;
 }
 
 @keyframes badgePop {
   0% { transform: scale(0.5); opacity: 0; }
-  60% { transform: scale(1.15); }
+  60% { transform: scale(1.1); }
   100% { transform: scale(1); opacity: 1; }
 }
 
-@keyframes legendaryGlow {
-  from { box-shadow: 0 0 4px rgba(236, 201, 75, 0.3); }
-  to { box-shadow: 0 0 12px rgba(236, 201, 75, 0.6); }
+/* Streak bar */
+#streak-display {
+  text-align: center;
+  margin-bottom: 10px;
+  transition: transform 0.15s ease;
+}
+
+#streak-display.streak-pulse {
+  transform: scale(1.02);
 }
 
 .streak-bar {
@@ -325,19 +276,15 @@ body {
   transition: width 0.3s ease, background 0.3s ease;
 }
 
-.streak-bar-fill.tier-nice {
+.streak-bar-fill.bar-lvl1 {
   background: #48bb78;
 }
 
-.streak-bar-fill.tier-hot {
+.streak-bar-fill.bar-lvl2 {
   background: #ed8936;
 }
 
-.streak-bar-fill.tier-blazing {
-  background: #fc8181;
-}
-
-.streak-bar-fill.tier-fire {
+.streak-bar-fill.bar-lvl3 {
   background: linear-gradient(90deg, #e53e3e, #dd6b20);
 }
 

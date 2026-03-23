@@ -312,65 +312,63 @@ function completeRound() {
     }
   }
 
-  // Update sparkline
+  // Update sparkline and badges
   renderSparkline();
+  updateBadges();
 
   const nextBtn = document.getElementById('next-btn');
   nextBtn.classList.remove('hidden');
   nextBtn.focus();
 }
 
-function getStreakTier(streak) {
-  if (streak >= 50) return { label: 'LEGENDARY', cls: 'tier-legendary' };
-  if (streak >= 30) return { label: 'ON FIRE', cls: 'tier-fire' };
-  if (streak >= 20) return { label: 'BLAZING', cls: 'tier-blazing' };
-  if (streak >= 10) return { label: 'HOT', cls: 'tier-hot' };
-  if (streak >= 5) return { label: 'NICE', cls: 'tier-nice' };
-  return null;
-}
-
 function updateStreakDisplay() {
+  // Streak bar: fills toward next multiple of 10
   const container = document.getElementById('streak-display');
   if (!container) return;
 
   const streak = state.streak;
-  const best = state.bestStreak;
-
-  // Streak number
-  const numEl = container.querySelector('.streak-num');
-  numEl.textContent = streak;
-
-  // Best streak
-  const bestEl = container.querySelector('.streak-best');
-  bestEl.textContent = `Best: ${best}`;
-
-  // Badge
-  const badgeEl = container.querySelector('.streak-badge');
-  const tier = getStreakTier(streak);
-  if (tier) {
-    badgeEl.textContent = tier.label;
-    badgeEl.className = 'streak-badge ' + tier.cls;
-    badgeEl.classList.remove('hidden');
-  } else {
-    badgeEl.classList.add('hidden');
-  }
-
-  // Bar fill (max out visual at 50)
   const barEl = container.querySelector('.streak-bar-fill');
-  const pct = Math.min(streak / 50, 1) * 100;
-  barEl.style.width = pct + '%';
+  const progressInTen = streak % 10;
+  const pct = (progressInTen / 10) * 100;
+  barEl.style.width = (streak > 0 && progressInTen === 0) ? '100%' : pct + '%';
 
-  // Bar color based on tier
-  if (streak >= 30) barEl.className = 'streak-bar-fill tier-fire';
-  else if (streak >= 20) barEl.className = 'streak-bar-fill tier-blazing';
-  else if (streak >= 10) barEl.className = 'streak-bar-fill tier-hot';
-  else if (streak >= 5) barEl.className = 'streak-bar-fill tier-nice';
+  // Color intensifies with level
+  const level = Math.floor(streak / 10);
+  if (level >= 3) barEl.className = 'streak-bar-fill bar-lvl3';
+  else if (level >= 2) barEl.className = 'streak-bar-fill bar-lvl2';
+  else if (level >= 1) barEl.className = 'streak-bar-fill bar-lvl1';
   else barEl.className = 'streak-bar-fill';
 
-  // Animate on correct
   if (streak > 0) {
     container.classList.add('streak-pulse');
     setTimeout(() => container.classList.remove('streak-pulse'), 300);
+  }
+
+  updateBadges();
+}
+
+function updateBadges() {
+  const container = document.getElementById('badges');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  // Streak badges: one per 10 streak
+  const streakLevel = Math.floor(state.bestStreak / 10);
+  if (streakLevel > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-streak';
+    badge.textContent = `${streakLevel}0 streak`;
+    container.appendChild(badge);
+  }
+
+  // Speed badges: count of rounds completed under 10s
+  const fastCount = state.roundTimes.filter(t => t < 10000).length;
+  if (fastCount > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-speed';
+    badge.textContent = `${fastCount} under 10s`;
+    container.appendChild(badge);
   }
 }
 
