@@ -3,6 +3,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
   initSettingsUI();
+  initTabSwitching();
+  initTriadQuizUI();
   newRound();
 
   // Keyboard shortcut: Space/Enter for next round
@@ -13,6 +15,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+function initTabSwitching() {
+  const tabs = document.querySelectorAll('#tab-bar .tab');
+  const fretboardView = document.getElementById('fretboard-view');
+  const triadQuizView = document.getElementById('triad-quiz-view');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      const view = tab.dataset.view;
+      if (view === 'fretboard') {
+        fretboardView.classList.remove('hidden');
+        triadQuizView.classList.add('hidden');
+        tqStop();
+      } else {
+        fretboardView.classList.add('hidden');
+        triadQuizView.classList.remove('hidden');
+        tqStart();
+      }
+    });
+  });
+}
 
 function initSettingsUI() {
   // Scale selector

@@ -517,6 +517,150 @@ body {
   }
 }
 
+/* Tab bar */
+#tab-bar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+#tab-bar .tab {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #8899bb;
+  background: #16162a;
+  border: 1px solid #252540;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#tab-bar .tab.active {
+  color: #e0e0f0;
+  background: #2a3a6a;
+  border-color: #3a4a8a;
+}
+
+#tab-bar .tab:hover:not(.active) {
+  background: #1e1e35;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Triad Quiz */
+#tq-settings {
+  background: #16162a;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border: 1px solid #252540;
+}
+
+#tq-game {
+  text-align: center;
+}
+
+#tq-prompt {
+  margin-bottom: 24px;
+}
+
+.tq-chord-name {
+  display: block;
+  font-size: 36px;
+  font-weight: 700;
+  color: #e0e0f0;
+  margin-bottom: 4px;
+}
+
+.tq-quality-label {
+  display: block;
+  font-size: 14px;
+  color: #8899bb;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#tq-note-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  max-width: 320px;
+  margin: 0 auto 24px;
+}
+
+.tq-note-btn {
+  padding: 14px 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #c0c0d8;
+  background: #1e1e35;
+  border: 2px solid #333355;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.tq-note-btn:hover:not(:disabled) {
+  background: #2a2a45;
+  border-color: #5566aa;
+}
+
+.tq-note-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.tq-note-btn.root-selected {
+  background: #1a3a5a;
+  border-color: #4488cc;
+  color: #88ccff;
+  cursor: default;
+}
+
+.tq-note-btn.correct {
+  background: #1a5c3a;
+  border-color: #48bb78;
+  color: #a8f0c8;
+}
+
+.tq-note-btn.wrong {
+  background: #5c1a1a;
+  border-color: #f56565;
+  color: #fca5a5;
+}
+
+.tq-note-btn.revealed {
+  background: #3a3a1a;
+  border-color: #d4a048;
+  color: #f6d88a;
+}
+
+.tq-note-btn:disabled:not(.root-selected):not(.correct):not(.revealed) {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#tq-feedback {
+  font-size: 14px;
+  color: #8899bb;
+  min-height: 20px;
+  margin-bottom: 16px;
+}
+
+#tq-stats {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  font-size: 14px;
+  color: #666688;
+}
+
 #version-tag {
   text-align: right;
   padding: 4px 8px;
