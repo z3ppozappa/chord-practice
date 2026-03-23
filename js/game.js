@@ -28,12 +28,15 @@ const state = {
   // Scoring
   score: 0,
   streak: 0,
+  bestStreak: 0,
   round: 0,
 
   // Timer
   sessionStartTime: null,
   roundStartTime: null,
   lastRoundTime: null,
+  bestRoundTime: null,
+  roundTimes: [],        // history of completed round times
   timerInterval: null
 };
 
@@ -268,9 +271,11 @@ function handleNoteClick(idx, note, group) {
     state.foundIndices.add(idx);
     state.score++;
     state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
     markDotCorrect(dot, state.showScaleDegrees);
     updateProgress();
     updateScoreDisplay();
+    updateStreakDisplay();
 
     if (state.foundIndices.size === state.chordToneIndices.length) {
       completeRound();
@@ -281,6 +286,7 @@ function handleNoteClick(idx, note, group) {
     state.streak = 0;
     flashDotWrong(dot);
     updateScoreDisplay();
+    updateStreakDisplay();
   }
 }
 
@@ -288,12 +294,115 @@ function completeRound() {
   state.roundComplete = true;
   state.lastRoundTime = Date.now() - state.roundStartTime;
 
+  const isNewBest = state.bestRoundTime === null || state.lastRoundTime < state.bestRoundTime;
+  if (isNewBest) state.bestRoundTime = state.lastRoundTime;
+
+  state.roundTimes.push(state.lastRoundTime);
+
   const roundTimeEl = document.getElementById('round-timer');
   roundTimeEl.textContent = formatTime(state.lastRoundTime);
+
+  // Update best time display
+  const bestEl = document.getElementById('best-time');
+  if (bestEl) {
+    bestEl.textContent = formatTime(state.bestRoundTime);
+    if (isNewBest && state.roundTimes.length > 1) {
+      bestEl.parentElement.classList.add('new-best');
+      setTimeout(() => bestEl.parentElement.classList.remove('new-best'), 1500);
+    }
+  }
+
+  // Update sparkline
+  renderSparkline();
 
   const nextBtn = document.getElementById('next-btn');
   nextBtn.classList.remove('hidden');
   nextBtn.focus();
+}
+
+function getStreakTier(streak) {
+  if (streak >= 50) return { label: 'LEGENDARY', cls: 'tier-legendary' };
+  if (streak >= 30) return { label: 'ON FIRE', cls: 'tier-fire' };
+  if (streak >= 20) return { label: 'BLAZING', cls: 'tier-blazing' };
+  if (streak >= 10) return { label: 'HOT', cls: 'tier-hot' };
+  if (streak >= 5) return { label: 'NICE', cls: 'tier-nice' };
+  return null;
+}
+
+function updateStreakDisplay() {
+  const container = document.getElementById('streak-display');
+  if (!container) return;
+
+  const streak = state.streak;
+  const best = state.bestStreak;
+
+  // Streak number
+  const numEl = container.querySelector('.streak-num');
+  numEl.textContent = streak;
+
+  // Best streak
+  const bestEl = container.querySelector('.streak-best');
+  bestEl.textContent = `Best: ${best}`;
+
+  // Badge
+  const badgeEl = container.querySelector('.streak-badge');
+  const tier = getStreakTier(streak);
+  if (tier) {
+    badgeEl.textContent = tier.label;
+    badgeEl.className = 'streak-badge ' + tier.cls;
+    badgeEl.classList.remove('hidden');
+  } else {
+    badgeEl.classList.add('hidden');
+  }
+
+  // Bar fill (max out visual at 50)
+  const barEl = container.querySelector('.streak-bar-fill');
+  const pct = Math.min(streak / 50, 1) * 100;
+  barEl.style.width = pct + '%';
+
+  // Bar color based on tier
+  if (streak >= 30) barEl.className = 'streak-bar-fill tier-fire';
+  else if (streak >= 20) barEl.className = 'streak-bar-fill tier-blazing';
+  else if (streak >= 10) barEl.className = 'streak-bar-fill tier-hot';
+  else if (streak >= 5) barEl.className = 'streak-bar-fill tier-nice';
+  else barEl.className = 'streak-bar-fill';
+
+  // Animate on correct
+  if (streak > 0) {
+    container.classList.add('streak-pulse');
+    setTimeout(() => container.classList.remove('streak-pulse'), 300);
+  }
+}
+
+function renderSparkline() {
+  const canvas = document.getElementById('sparkline');
+  if (!canvas || state.roundTimes.length === 0) return;
+
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const times = state.roundTimes.slice(-20); // last 20 rounds
+  if (times.length < 2) return;
+
+  const max = Math.max(...times);
+  const min = Math.min(...times);
+  const range = max - min || 1;
+
+  const step = w / (times.length - 1);
+
+  // Draw bars
+  const barW = Math.max(2, step * 0.6);
+  times.forEach((t, i) => {
+    const x = i * step;
+    const barH = ((t - min) / range) * (h - 4) + 4;
+    const y = h - barH;
+
+    const isBest = t === state.bestRoundTime;
+    ctx.fillStyle = isBest ? '#48bb78' : (i === times.length - 1 ? '#7788cc' : '#3a4a6a');
+    ctx.fillRect(x - barW / 2 + step / 2, y, barW, barH);
+  });
 }
 
 function loadSettings() {
@@ -330,8 +439,11 @@ function saveSettings() {
 function resetGame() {
   state.score = 0;
   state.streak = 0;
+  state.bestStreak = 0;
   state.round = 0;
   state.sessionStartTime = null;
   state.lastRoundTime = null;
+  state.bestRoundTime = null;
+  state.roundTimes = [];
   newRound();
 }
