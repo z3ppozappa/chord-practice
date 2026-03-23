@@ -18,6 +18,7 @@ const state = {
   showScaleDegrees: true,    // show scale degree labels on dots
   parentKeyDegrees: false,   // use parent key degrees instead of modal
   keepProgression: false,    // keep same key/mode/root across rounds
+  hardMode: false,           // hide scale dots, tap blind
 
   // Current round
   currentScale: null,
@@ -163,7 +164,7 @@ function newRound() {
   });
 
   // Render fretboard
-  state.dots = renderFretboard('fretboard-container', state.pattern, state.activeStrings, handleNoteClick, state.showScaleDegrees);
+  state.dots = renderFretboard('fretboard-container', state.pattern, state.activeStrings, handleNoteClick, state.showScaleDegrees && !state.hardMode, state.hardMode);
 
   // Set scale degree text on dots
   if (state.showScaleDegrees) {
@@ -221,7 +222,7 @@ function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
   const findEl = document.getElementById('find-prompt');
   if (state.chordToneIndices.length === 0) {
     findEl.textContent = 'No chord tones on these strings';
-  } else if (state.showChordName) {
+  } else if (state.showChordName || state.hardMode) {
     // Show triad notes in R-3-5 order
     const modeIntervals = getModeIntervals(scaleKey, keyCenterMode);
     const triadNotes = chordInfo.chordDegreeIndices.map(di =>
@@ -311,7 +312,19 @@ function updateBatchDots() {
 
 function handleNoteClick(idx, note, group) {
   if (state.roundComplete) return;
-  if (state.foundIndices.has(idx)) return;
+  if (idx >= 0 && state.foundIndices.has(idx)) return;
+
+  // Hard mode: tap on non-scale-note position
+  if (idx === -1) {
+    state.roundPerfect = false;
+    state.strikes++;
+    flashWrongAtPosition(group);
+    updateScoreDisplay();
+    updateStreakDisplay();
+    updateStrikesDisplay();
+    if (state.strikes >= 3) strikeOut();
+    return;
+  }
 
   const dot = state.dots.find(d => d.index === idx);
   if (!dot) return;
@@ -319,7 +332,7 @@ function handleNoteClick(idx, note, group) {
   if (note.chordTone) {
     // Correct!
     state.foundIndices.add(idx);
-    markDotCorrect(dot, state.showScaleDegrees);
+    markDotCorrect(dot, state.showScaleDegrees && !state.hardMode);
     updateProgress();
     updateScoreDisplay();
     updateStreakDisplay();
@@ -331,7 +344,7 @@ function handleNoteClick(idx, note, group) {
     // Wrong
     state.roundPerfect = false;
     state.strikes++;
-    flashDotWrong(dot);
+    flashDotWrong(dot, state.hardMode);
     updateScoreDisplay();
     updateStreakDisplay();
     updateStrikesDisplay();
@@ -370,9 +383,15 @@ function strikeOut() {
         const circle = dot.group.querySelector('.dot-circle');
         const labelChord = dot.group.querySelector('.dot-label-chord');
         const labelDegree = dot.group.querySelector('.dot-label-degree');
-        circle.setAttribute('fill', '#2a2a3a');
-        circle.setAttribute('stroke', '#4a4a5a');
-        circle.setAttribute('stroke-width', '1.5');
+        if (state.hardMode) {
+          circle.setAttribute('fill', 'transparent');
+          circle.setAttribute('stroke', 'transparent');
+          circle.setAttribute('stroke-width', '0');
+        } else {
+          circle.setAttribute('fill', '#2a2a3a');
+          circle.setAttribute('stroke', '#4a4a5a');
+          circle.setAttribute('stroke-width', '1.5');
+        }
         labelChord.setAttribute('opacity', '0');
         labelDegree.setAttribute('opacity', '0');
         dot.group.classList.remove('correct');
@@ -518,6 +537,7 @@ function loadSettings() {
       state.showScaleDegrees = saved.showScaleDegrees !== undefined ? saved.showScaleDegrees : true;
       state.parentKeyDegrees = saved.parentKeyDegrees !== undefined ? saved.parentKeyDegrees : false;
       state.keepProgression = saved.keepProgression !== undefined ? saved.keepProgression : false;
+      state.hardMode = saved.hardMode !== undefined ? saved.hardMode : false;
     }
   } catch (e) { /* ignore */ }
 }
@@ -533,7 +553,8 @@ function saveSettings() {
     showChordName: state.showChordName,
     showScaleDegrees: state.showScaleDegrees,
     parentKeyDegrees: state.parentKeyDegrees,
-    keepProgression: state.keepProgression
+    keepProgression: state.keepProgression,
+    hardMode: state.hardMode
   }));
 }
 

@@ -128,6 +128,25 @@ function initSettingsUI() {
     saveSettings();
   });
 
+  const hardModeEl = document.getElementById('hard-mode');
+  hardModeEl.checked = state.hardMode;
+  if (state.hardMode) {
+    showChord.checked = true;
+    showChord.disabled = true;
+  }
+  hardModeEl.addEventListener('change', () => {
+    state.hardMode = hardModeEl.checked;
+    if (state.hardMode) {
+      state.showChordName = true;
+      showChord.checked = true;
+      showChord.disabled = true;
+    } else {
+      showChord.disabled = false;
+    }
+    saveSettings();
+    newRound();
+  });
+
   // Next button
   document.getElementById('next-btn').addEventListener('click', () => {
     newRound();
