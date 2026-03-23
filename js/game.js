@@ -203,7 +203,12 @@ function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
   if (state.chordToneIndices.length === 0) {
     findEl.textContent = 'No chord tones on these strings';
   } else if (state.showChordName) {
-    findEl.textContent = `Find ${numeral} (${chordName})`;
+    // Show triad notes in R-3-5 order
+    const modeIntervals = getModeIntervals(scaleKey, keyCenterMode);
+    const triadNotes = chordInfo.chordDegreeIndices.map(di =>
+      NOTE_NAMES[(4 + rootFret + modeIntervals[di]) % 12]
+    );
+    findEl.textContent = `Find ${numeral} (${triadNotes.join(' - ')})`;
   } else {
     findEl.textContent = `Find ${numeral}`;
   }
