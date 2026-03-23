@@ -17,6 +17,7 @@ const state = {
   showChordName: false,
   showScaleDegrees: true,    // show scale degree labels on dots
   parentKeyDegrees: false,   // use parent key degrees instead of modal
+  keepProgression: false,    // keep same key/mode/root across rounds
 
   // Current round
   currentScale: null,
@@ -69,6 +70,24 @@ function updateTimerDisplay() {
 }
 
 function pickRound() {
+  // Reuse previous key/mode/root when keepProgression is enabled and we have prior state
+  if (state.keepProgression && state.currentScale !== null) {
+    const scaleKey = state.currentScale;
+    const keyCenterMode = state.currentMode;
+    const rootFret = state.currentRootFret;
+    const numModes = SCALE_DEFS[scaleKey].modes.length;
+
+    let shapeMode;
+    if (state.positionOffset === -1) {
+      shapeMode = Math.floor(Math.random() * numModes);
+    } else {
+      shapeMode = (keyCenterMode + state.positionOffset) % numModes;
+    }
+
+    const shapeRootFret = getShapeRootFret(rootFret, scaleKey, keyCenterMode, shapeMode);
+    return { scaleKey, keyCenterMode, shapeMode, rootFret, shapeRootFret };
+  }
+
   let scaleKey = state.scaleKey;
   let keyCenterMode = state.modeIndex;
 
@@ -498,6 +517,7 @@ function loadSettings() {
       state.showChordName = saved.showChordName !== undefined ? saved.showChordName : false;
       state.showScaleDegrees = saved.showScaleDegrees !== undefined ? saved.showScaleDegrees : true;
       state.parentKeyDegrees = saved.parentKeyDegrees !== undefined ? saved.parentKeyDegrees : false;
+      state.keepProgression = saved.keepProgression !== undefined ? saved.keepProgression : false;
     }
   } catch (e) { /* ignore */ }
 }
@@ -512,7 +532,8 @@ function saveSettings() {
     showModeName: state.showModeName,
     showChordName: state.showChordName,
     showScaleDegrees: state.showScaleDegrees,
-    parentKeyDegrees: state.parentKeyDegrees
+    parentKeyDegrees: state.parentKeyDegrees,
+    keepProgression: state.keepProgression
   }));
 }
 

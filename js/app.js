@@ -121,6 +121,13 @@ function initSettingsUI() {
     newRound();
   });
 
+  const keepProg = document.getElementById('keep-progression');
+  keepProg.checked = state.keepProgression;
+  keepProg.addEventListener('change', () => {
+    state.keepProgression = keepProg.checked;
+    saveSettings();
+  });
+
   // Next button
   document.getElementById('next-btn').addEventListener('click', () => {
     newRound();
