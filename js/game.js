@@ -433,16 +433,12 @@ function updateBadges() {
 
   container.innerHTML = '';
 
-  // Perfect round streak badge
-  if (state.streak >= 3) {
+  // Streak badges: one per 10 perfect rounds
+  const streakLevel = Math.floor(state.bestStreak / 10);
+  if (streakLevel > 0) {
     const badge = document.createElement('span');
     badge.className = 'badge badge-streak';
-    badge.textContent = `${state.streak} perfect`;
-    container.appendChild(badge);
-  } else if (state.bestStreak >= 3) {
-    const badge = document.createElement('span');
-    badge.className = 'badge badge-streak faded';
-    badge.textContent = `best: ${state.bestStreak} perfect`;
+    badge.textContent = `${streakLevel}0 streak`;
     container.appendChild(badge);
   }
 
