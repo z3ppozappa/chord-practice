@@ -32,7 +32,6 @@ const state = {
   roundComplete: false,
 
   // Scoring
-  score: 0,
   streak: 0,
   bestStreak: 0,
   round: 0,
@@ -162,7 +161,7 @@ function newRound() {
   updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret);
   updateProgress();
   updateScoreDisplay();
-  updateRoundDisplay();
+  updateBatchDots();
 
   // Start timer
   startTimers();
@@ -263,12 +262,25 @@ function updateProgress() {
 }
 
 function updateScoreDisplay() {
-  document.getElementById('score').textContent = state.score;
   document.getElementById('streak').textContent = state.streak;
 }
 
-function updateRoundDisplay() {
-  document.getElementById('round-num').textContent = state.round;
+function updateBatchDots() {
+  const container = document.getElementById('batch-dots');
+  if (!container) return;
+
+  container.classList.remove('batch-complete');
+  const batchPos = (state.round - 1) % 10; // 0-9 position in current batch
+  const completedInBatch = batchPos; // rounds completed before current
+
+  container.innerHTML = '';
+  for (let i = 0; i < 10; i++) {
+    const dot = document.createElement('span');
+    dot.className = 'batch-dot';
+    if (i < completedInBatch) dot.classList.add('filled');
+    if (i === completedInBatch) dot.classList.add('current');
+    container.appendChild(dot);
+  }
 }
 
 function handleNoteClick(idx, note, group) {
@@ -281,7 +293,6 @@ function handleNoteClick(idx, note, group) {
   if (note.chordTone) {
     // Correct!
     state.foundIndices.add(idx);
-    state.score++;
     markDotCorrect(dot, state.showScaleDegrees);
     updateProgress();
     updateScoreDisplay();
@@ -292,7 +303,6 @@ function handleNoteClick(idx, note, group) {
     }
   } else {
     // Wrong
-    state.score = Math.max(0, state.score - 1);
     state.roundPerfect = false;
     state.strikes++;
     flashDotWrong(dot);
@@ -381,17 +391,35 @@ function completeRound() {
   roundTimeEl.textContent = formatTime(state.lastRoundTime);
 
   // Update best time display
+  const bestDisplay = document.getElementById('best-time-display');
   const bestEl = document.getElementById('best-time');
   if (bestEl) {
     bestEl.textContent = formatTime(state.bestRoundTime);
-    if (isNewBest && state.roundTimes.length > 1) {
-      bestEl.parentElement.classList.add('new-best');
-      setTimeout(() => bestEl.parentElement.classList.remove('new-best'), 1500);
+    if (isNewBest && state.roundTimes.length > 1 && bestDisplay) {
+      bestDisplay.classList.add('new-best');
+      setTimeout(() => bestDisplay.classList.remove('new-best'), 1500);
     }
   }
 
-  // Update sparkline and badges
-  renderSparkline();
+  // Update batch dots — mark current as filled and check for batch complete
+  updateBatchDots();
+  const batchPos = (state.round) % 10; // after completing, round is 1-indexed
+  const container = document.getElementById('batch-dots');
+  if (container) {
+    // Fill all dots up to and including the current round in this batch
+    const dots = container.querySelectorAll('.batch-dot');
+    const completedInBatch = ((state.round - 1) % 10) + 1;
+    dots.forEach((dot, i) => {
+      dot.classList.remove('current');
+      if (i < completedInBatch) dot.classList.add('filled');
+    });
+
+    // Flash green when batch of 10 is complete
+    if (completedInBatch === 10) {
+      container.classList.add('batch-complete');
+    }
+  }
+
   updateBadges();
 
   const nextBtn = document.getElementById('next-btn');
@@ -450,37 +478,6 @@ function updateBadges() {
   }
 }
 
-function renderSparkline() {
-  const canvas = document.getElementById('sparkline');
-  if (!canvas || state.roundTimes.length === 0) return;
-
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width;
-  const h = canvas.height;
-  ctx.clearRect(0, 0, w, h);
-
-  const times = state.roundTimes.slice(-20); // last 20 rounds
-  if (times.length < 2) return;
-
-  const max = Math.max(...times);
-  const min = Math.min(...times);
-  const range = max - min || 1;
-
-  const step = w / (times.length - 1);
-
-  // Draw bars
-  const barW = Math.max(2, step * 0.6);
-  times.forEach((t, i) => {
-    const x = i * step;
-    const barH = ((t - min) / range) * (h - 4) + 4;
-    const y = h - barH;
-
-    const isBest = t === state.bestRoundTime;
-    ctx.fillStyle = isBest ? '#48bb78' : (i === times.length - 1 ? '#7788cc' : '#3a4a6a');
-    ctx.fillRect(x - barW / 2 + step / 2, y, barW, barH);
-  });
-}
-
 function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem('chordGameSettings'));
@@ -513,7 +510,6 @@ function saveSettings() {
 }
 
 function resetGame() {
-  state.score = 0;
   state.streak = 0;
   state.bestStreak = 0;
   state.round = 0;

@@ -290,31 +290,81 @@ body {
   background: linear-gradient(90deg, #e53e3e, #dd6b20);
 }
 
-/* Time sparkline */
-#time-graph {
+/* Best time display */
+#best-time-display {
   text-align: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
-#sparkline {
-  display: inline-block;
-  border-radius: 4px;
-  background: #12122a;
+.best-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #7788aa;
+  margin-bottom: 2px;
 }
 
-/* New best flash */
-.stat.new-best .stat-value {
+.best-value {
+  display: block;
+  font-size: 32px;
+  font-weight: 700;
+  color: #d0d0ee;
+  font-variant-numeric: tabular-nums;
+  transition: color 0.3s ease;
+}
+
+#best-time-display.new-best .best-value {
   color: #48bb78;
   animation: bestFlash 1.5s ease;
 }
 
-.stat.new-best .stat-label {
+#best-time-display.new-best .best-label {
   color: #48bb78;
 }
 
 @keyframes bestFlash {
   0%, 100% { color: #48bb78; }
   30% { color: #fff; text-shadow: 0 0 8px rgba(72, 187, 120, 0.8); }
+}
+
+/* Batch progress dots */
+#batch-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.batch-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1a1a2e;
+  border: 1.5px solid #333355;
+  transition: all 0.3s ease;
+}
+
+.batch-dot.filled {
+  background: #4a5a8a;
+  border-color: #6677aa;
+}
+
+.batch-dot.current {
+  border-color: #7788cc;
+  box-shadow: 0 0 4px rgba(119, 136, 204, 0.4);
+}
+
+#batch-dots.batch-complete .batch-dot.filled {
+  animation: batchFlash 0.6s ease;
+  background: #48bb78;
+  border-color: #68d391;
+}
+
+@keyframes batchFlash {
+  0% { background: #4a5a8a; border-color: #6677aa; }
+  40% { background: #68d391; border-color: #9ae6b4; box-shadow: 0 0 10px rgba(72, 187, 120, 0.6); }
+  100% { background: #48bb78; border-color: #68d391; }
 }
 
 /* Stats bar */
