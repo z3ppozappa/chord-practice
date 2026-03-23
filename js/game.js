@@ -34,6 +34,7 @@ const state = {
   // Scoring
   score: 0,
   streak: 0,
+  bestStreak: 0,
   round: 0,
   strikes: 0,
   roundPerfect: true,
@@ -41,6 +42,8 @@ const state = {
   // Timer
   roundStartTime: null,
   lastRoundTime: null,
+  bestRoundTime: null,
+  roundTimes: [],        // history of completed round times
   timerInterval: null
 };
 
@@ -279,9 +282,12 @@ function handleNoteClick(idx, note, group) {
     // Correct!
     state.foundIndices.add(idx);
     state.score++;
+    state.streak++;
+    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
     markDotCorrect(dot, state.showScaleDegrees);
     updateProgress();
     updateScoreDisplay();
+    updateStreakDisplay();
 
     if (state.foundIndices.size === state.chordToneIndices.length) {
       completeRound();
@@ -293,6 +299,7 @@ function handleNoteClick(idx, note, group) {
     state.strikes++;
     flashDotWrong(dot);
     updateScoreDisplay();
+    updateStreakDisplay();
     updateStrikesDisplay();
 
     if (state.strikes >= 3) {
@@ -364,14 +371,115 @@ function completeRound() {
   } else {
     state.streak = 0;
   }
+
+  const isNewBest = state.bestRoundTime === null || state.lastRoundTime < state.bestRoundTime;
+  if (isNewBest) state.bestRoundTime = state.lastRoundTime;
+
+  state.roundTimes.push(state.lastRoundTime);
   updateScoreDisplay();
 
   const roundTimeEl = document.getElementById('round-timer');
   roundTimeEl.textContent = formatTime(state.lastRoundTime);
 
+  // Update best time display
+  const bestEl = document.getElementById('best-time');
+  if (bestEl) {
+    bestEl.textContent = formatTime(state.bestRoundTime);
+    if (isNewBest && state.roundTimes.length > 1) {
+      bestEl.parentElement.classList.add('new-best');
+      setTimeout(() => bestEl.parentElement.classList.remove('new-best'), 1500);
+    }
+  }
+
+  // Update sparkline and badges
+  renderSparkline();
+  updateBadges();
+
   const nextBtn = document.getElementById('next-btn');
   nextBtn.classList.remove('hidden');
   nextBtn.focus();
+}
+
+function updateStreakDisplay() {
+  // Streak bar: fills toward next multiple of 10
+  const container = document.getElementById('streak-display');
+  if (!container) return;
+
+  const streak = state.streak;
+  const barEl = container.querySelector('.streak-bar-fill');
+  const progressInTen = streak % 10;
+  const pct = (progressInTen / 10) * 100;
+  barEl.style.width = (streak > 0 && progressInTen === 0) ? '100%' : pct + '%';
+
+  // Color intensifies with level
+  const level = Math.floor(streak / 10);
+  if (level >= 3) barEl.className = 'streak-bar-fill bar-lvl3';
+  else if (level >= 2) barEl.className = 'streak-bar-fill bar-lvl2';
+  else if (level >= 1) barEl.className = 'streak-bar-fill bar-lvl1';
+  else barEl.className = 'streak-bar-fill';
+
+  if (streak > 0) {
+    container.classList.add('streak-pulse');
+    setTimeout(() => container.classList.remove('streak-pulse'), 300);
+  }
+
+  updateBadges();
+}
+
+function updateBadges() {
+  const container = document.getElementById('badges');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  // Streak badges: one per 10 streak
+  const streakLevel = Math.floor(state.bestStreak / 10);
+  if (streakLevel > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-streak';
+    badge.textContent = `${streakLevel}0 streak`;
+    container.appendChild(badge);
+  }
+
+  // Speed badges: count of rounds completed under 10s
+  const fastCount = state.roundTimes.filter(t => t < 10000).length;
+  if (fastCount > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-speed';
+    badge.textContent = `${fastCount} under 10s`;
+    container.appendChild(badge);
+  }
+}
+
+function renderSparkline() {
+  const canvas = document.getElementById('sparkline');
+  if (!canvas || state.roundTimes.length === 0) return;
+
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const times = state.roundTimes.slice(-20); // last 20 rounds
+  if (times.length < 2) return;
+
+  const max = Math.max(...times);
+  const min = Math.min(...times);
+  const range = max - min || 1;
+
+  const step = w / (times.length - 1);
+
+  // Draw bars
+  const barW = Math.max(2, step * 0.6);
+  times.forEach((t, i) => {
+    const x = i * step;
+    const barH = ((t - min) / range) * (h - 4) + 4;
+    const y = h - barH;
+
+    const isBest = t === state.bestRoundTime;
+    ctx.fillStyle = isBest ? '#48bb78' : (i === times.length - 1 ? '#7788cc' : '#3a4a6a');
+    ctx.fillRect(x - barW / 2 + step / 2, y, barW, barH);
+  });
 }
 
 function loadSettings() {
@@ -408,7 +516,10 @@ function saveSettings() {
 function resetGame() {
   state.score = 0;
   state.streak = 0;
+  state.bestStreak = 0;
   state.round = 0;
   state.lastRoundTime = null;
+  state.bestRoundTime = null;
+  state.roundTimes = [];
   newRound();
 }

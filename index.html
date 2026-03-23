@@ -74,6 +74,18 @@
 
       <div id="progress"></div>
 
+      <div id="badges"></div>
+
+      <div id="streak-display">
+        <div class="streak-bar">
+          <div class="streak-bar-fill"></div>
+        </div>
+      </div>
+
+      <div id="time-graph">
+        <canvas id="sparkline" width="240" height="40"></canvas>
+      </div>
+
       <div id="stats">
         <div class="stat">
           <span class="stat-label">Strikes</span>
@@ -98,6 +110,14 @@
         <div class="stat">
           <span class="stat-label">Round</span>
           <span class="stat-value" id="round-timer">0:00</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Best</span>
+          <span class="stat-value" id="best-time">--</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Session</span>
+          <span class="stat-value" id="session-timer">0:00</span>
         </div>
       </div>
 
