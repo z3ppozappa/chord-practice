@@ -8,7 +8,7 @@ function createSVGElement(tag, attrs) {
   return el;
 }
 
-function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showDegrees) {
+function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showDegrees, hardMode) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
 
@@ -92,6 +92,36 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showD
     svg.appendChild(label);
   }
 
+  // Build a lookup of pattern notes by fret+string for hard mode
+  const patternLookup = {};
+  pattern.forEach((note, idx) => {
+    patternLookup[`${note.string}:${note.fret}`] = { note, idx };
+  });
+
+  // In hard mode, add invisible tap targets at every fret/string position
+  if (hardMode) {
+    for (let s = 0; s < 6; s++) {
+      if (!activeStrings[s]) continue;
+      for (let i = 0; i < numSpaces; i++) {
+        const fretNum = firstWireFret + i + 1;
+        const key = `${s}:${fretNum}`;
+        if (patternLookup[key]) continue; // will be handled by note dots below
+        const cx = pad.left + (i + 0.5) * fretSpacing;
+        const cy = pad.top + s * stringSpacing;
+        const hitGroup = createSVGElement('g', { class: 'hard-mode-target' });
+        const hitArea = createSVGElement('circle', {
+          cx, cy, r: 22, fill: 'transparent', class: 'hit-area'
+        });
+        hitGroup.appendChild(hitArea);
+        hitGroup.style.cursor = 'pointer';
+        hitGroup.addEventListener('click', () => {
+          onNoteClick(-1, { chordTone: null, string: s, fret: fretNum }, hitGroup);
+        });
+        svg.appendChild(hitGroup);
+      }
+    }
+  }
+
   // Note dots
   const dots = [];
   pattern.forEach((note, idx) => {
@@ -121,6 +151,11 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showD
       circle.setAttribute('stroke', '#2a2a3a');
       circle.setAttribute('stroke-width', '1');
       circle.setAttribute('opacity', '0.3');
+    } else if (hardMode) {
+      // Hard mode: dots are invisible
+      circle.setAttribute('fill', 'transparent');
+      circle.setAttribute('stroke', 'transparent');
+      circle.setAttribute('stroke-width', '0');
     } else {
       circle.setAttribute('fill', '#2a2a3a');
       circle.setAttribute('stroke', '#4a4a5a');
@@ -221,15 +256,38 @@ function markDotCorrect(dot, showDegree) {
   dot.group.style.cursor = 'default';
 }
 
-function flashDotWrong(dot) {
+function flashDotWrong(dot, hardMode) {
   const circle = dot.group.querySelector('.dot-circle');
   dot.group.classList.add('wrong');
   circle.setAttribute('fill', '#5c1a1a');
   circle.setAttribute('stroke', '#f56565');
+  if (hardMode) circle.setAttribute('stroke-width', '1.5');
 
   setTimeout(() => {
     dot.group.classList.remove('wrong');
-    circle.setAttribute('fill', '#2a2a3a');
-    circle.setAttribute('stroke', '#4a4a5a');
+    if (hardMode) {
+      circle.setAttribute('fill', 'transparent');
+      circle.setAttribute('stroke', 'transparent');
+      circle.setAttribute('stroke-width', '0');
+    } else {
+      circle.setAttribute('fill', '#2a2a3a');
+      circle.setAttribute('stroke', '#4a4a5a');
+    }
+  }, 400);
+}
+
+// Flash wrong at an arbitrary fretboard position (hard mode, no scale note there)
+function flashWrongAtPosition(group) {
+  // Create a temporary red dot at the click position
+  const hitArea = group.querySelector('.hit-area');
+  if (!hitArea) return;
+  const cx = hitArea.getAttribute('cx');
+  const cy = hitArea.getAttribute('cy');
+  const circle = createSVGElement('circle', {
+    cx, cy, r: 16, fill: '#5c1a1a', stroke: '#f56565', 'stroke-width': '1.5'
+  });
+  group.appendChild(circle);
+  setTimeout(() => {
+    circle.remove();
   }, 400);
 }
