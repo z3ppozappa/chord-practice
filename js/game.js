@@ -200,6 +200,16 @@ function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
     findEl.textContent = `Find ${numeral}`;
   }
 
+  // Chord list for the key
+  const chordListEl = document.getElementById('chord-list');
+  if (chordListEl) {
+    const allChords = getAvailableChords(scaleKey, keyCenterMode);
+    chordListEl.innerHTML = allChords.map(c => {
+      const active = c.romanNumeral === numeral;
+      return `<span class="chord-item${active ? ' active' : ''}">${c.romanNumeral}</span>`;
+    }).join(' ');
+  }
+
   // Parent key info
   const parentEl = document.getElementById('parent-key-info');
   if (parentEl) {
