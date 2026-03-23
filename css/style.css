@@ -125,6 +125,25 @@ body {
   color: #e0e0f0;
 }
 
+#chord-list {
+  margin-top: 6px;
+  font-size: 14px;
+  color: #8899bb;
+  letter-spacing: 0.5px;
+}
+
+.chord-item {
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+
+.chord-item.active {
+  color: #e0e0f0;
+  background: #2a3a6a;
+  font-weight: 600;
+}
+
 #shape-info {
   display: block;
   font-size: 13px;
