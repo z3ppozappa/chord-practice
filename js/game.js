@@ -169,8 +169,9 @@ function newRound() {
   // Update strikes display
   updateStrikesDisplay();
 
-  // Hide next button
-  document.getElementById('next-btn').classList.add('hidden');
+  // Disable next button
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.disabled = true;
 }
 
 function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
@@ -423,7 +424,7 @@ function completeRound() {
   updateBadges();
 
   const nextBtn = document.getElementById('next-btn');
-  nextBtn.classList.remove('hidden');
+  nextBtn.disabled = false;
   nextBtn.focus();
 }
 
