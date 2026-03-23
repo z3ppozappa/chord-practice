@@ -2,9 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Chord Tone Finder</title>
   <link rel="stylesheet" href="css/style.css">
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0e0e1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ChordTones">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
 </head>
 <body>
   <div id="app">
@@ -37,29 +44,34 @@
         <label>Strings
           <select id="string-preset">
             <option value="all">All</option>
+            <option value="top4">Top 4 (e, B, G, D)</option>
+            <option value="mid4">Mid 4 (B, G, D, A)</option>
             <option value="high">High (e, B, G)</option>
-            <option value="middle">Middle (B, G, D)</option>
+            <option value="highMid">High Mid (B, G, D)</option>
+            <option value="lowMid">Low Mid (G, D, A)</option>
             <option value="low">Low (D, A, E)</option>
-            <option value="custom">Custom</option>
           </select>
         </label>
       </div>
-      <div id="custom-strings" class="hidden"></div>
       <div class="settings-row">
         <label><input type="checkbox" id="show-mode" checked> Show mode name</label>
-        <label><input type="checkbox" id="show-chord" checked> Show chord name</label>
-        <label><input type="checkbox" id="show-degrees"> Scale degrees</label>
+        <label><input type="checkbox" id="show-chord"> Show chord name</label>
+        <label><input type="checkbox" id="show-degrees" checked> Scale degrees</label>
         <label><input type="checkbox" id="parent-key-degrees"> Parent key</label>
+        <label><input type="checkbox" id="keep-progression"> Keep progression</label>
       </div>
     </header>
 
     <main id="game">
-      <div id="prompt">
-        <span id="mode-name"></span>
-        <span id="shape-info" class="hidden"></span>
-        <span id="parent-key-info" class="hidden"></span>
-        <div id="find-prompt"></div>
-        <div id="chord-list"></div>
+      <div id="prompt-row">
+        <div id="prompt">
+          <span id="mode-name"></span>
+          <span id="shape-info" class="hidden"></span>
+          <span id="parent-key-info" class="hidden"></span>
+          <div id="find-prompt"></div>
+          <div id="chord-list"></div>
+        </div>
+        <button id="next-btn" disabled>Next Pattern ▶</button>
       </div>
 
       <div id="fretboard-container"></div>
@@ -83,6 +95,14 @@
 
       <div id="stats">
         <div class="stat">
+          <span class="stat-label">Strikes</span>
+          <span class="stat-value" id="strikes">
+            <span class="strike-pip"></span>
+            <span class="strike-pip"></span>
+            <span class="strike-pip"></span>
+          </span>
+        </div>
+        <div class="stat">
           <span class="stat-label">Streak</span>
           <span class="stat-value" id="streak">0</span>
         </div>
@@ -92,13 +112,37 @@
         </div>
       </div>
 
-      <button id="next-btn" class="hidden">Next Round (Space)</button>
     </main>
+    <div id="version-tag">v17</div>
   </div>
 
   <script src="js/scales.js"></script>
   <script src="js/fretboard.js"></script>
   <script src="js/game.js"></script>
   <script src="js/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js');
+    }
+
+    // Triple-tap version tag to clear all caches and force reload
+    (function() {
+      const tag = document.getElementById('version-tag');
+      let taps = 0, timer;
+      tag.addEventListener('click', () => {
+        taps++;
+        clearTimeout(timer);
+        if (taps >= 3) {
+          taps = 0;
+          tag.textContent = 'clearing...';
+          caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+            .then(() => navigator.serviceWorker.getRegistrations())
+            .then(regs => Promise.all(regs.map(r => r.unregister())))
+            .then(() => location.reload(true));
+        }
+        timer = setTimeout(() => taps = 0, 600);
+      });
+    })();
+  </script>
 </body>
 </html>

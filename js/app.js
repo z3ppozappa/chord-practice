@@ -20,6 +20,7 @@ function initSettingsUI() {
   scaleSelect.value = state.scaleKey;
   scaleSelect.addEventListener('change', () => {
     state.scaleKey = scaleSelect.value;
+    state.modeIndex = getDefaultModeIndex(state.scaleKey);
     updateModeOptions();
     updatePositionOptions();
     updateChordOptions();
@@ -66,28 +67,21 @@ function initSettingsUI() {
 
   // String preset selector
   const stringPreset = document.getElementById('string-preset');
-  const customStrings = document.getElementById('custom-strings');
   stringPreset.addEventListener('change', () => {
     const val = stringPreset.value;
-    if (val === 'custom') {
-      customStrings.classList.remove('hidden');
-    } else {
-      customStrings.classList.add('hidden');
-      const presets = {
-        all:    [true, true, true, true, true, true],
-        high:   [true, true, true, false, false, false],
-        middle: [false, true, true, true, false, false],
-        low:    [false, false, false, true, true, true]
-      };
-      state.activeStrings = presets[val];
-      updateStringCheckboxes();
-      saveSettings();
-      newRound();
-    }
+    const presets = {
+      all:    [true, true, true, true, true, true],
+      top4:   [true, true, true, true, false, false],
+      mid4:   [false, true, true, true, true, false],
+      high:   [true, true, true, false, false, false],
+      highMid: [false, true, true, true, false, false],
+      lowMid: [false, false, true, true, true, false],
+      low:    [false, false, false, true, true, true]
+    };
+    state.activeStrings = presets[val];
+    saveSettings();
+    newRound();
   });
-
-  // Individual string checkboxes
-  initStringCheckboxes();
 
   // Show/hide toggles
   const showMode = document.getElementById('show-mode');
@@ -125,6 +119,13 @@ function initSettingsUI() {
     }
     saveSettings();
     newRound();
+  });
+
+  const keepProg = document.getElementById('keep-progression');
+  keepProg.checked = state.keepProgression;
+  keepProg.addEventListener('change', () => {
+    state.keepProgression = keepProg.checked;
+    saveSettings();
   });
 
   // Next button
@@ -172,60 +173,26 @@ function updateModeOptions() {
 
 }
 
-function initStringCheckboxes() {
-  const container = document.getElementById('custom-strings');
-  container.innerHTML = '';
-  STRING_LABELS.forEach((label, idx) => {
-    const wrapper = document.createElement('label');
-    wrapper.className = 'string-checkbox';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = state.activeStrings[idx];
-    cb.dataset.string = idx;
-    cb.addEventListener('change', () => {
-      state.activeStrings[idx] = cb.checked;
-      // Ensure at least one string is active
-      if (!state.activeStrings.some(s => s)) {
-        state.activeStrings[idx] = true;
-        cb.checked = true;
-      }
-      detectStringPreset();
-      saveSettings();
-      newRound();
-    });
-    wrapper.appendChild(cb);
-    wrapper.appendChild(document.createTextNode(label));
-    container.appendChild(wrapper);
-  });
-}
-
-function updateStringCheckboxes() {
-  const checkboxes = document.querySelectorAll('#custom-strings input[type="checkbox"]');
-  checkboxes.forEach((cb, idx) => {
-    cb.checked = state.activeStrings[idx];
-  });
-}
-
 function detectStringPreset() {
   const s = state.activeStrings;
   const stringPreset = document.getElementById('string-preset');
-  const customStrings = document.getElementById('custom-strings');
 
   if (s.every(v => v)) {
     stringPreset.value = 'all';
-    customStrings.classList.add('hidden');
+  } else if (s[0] && s[1] && s[2] && s[3] && !s[4] && !s[5]) {
+    stringPreset.value = 'top4';
+  } else if (!s[0] && s[1] && s[2] && s[3] && s[4] && !s[5]) {
+    stringPreset.value = 'mid4';
   } else if (s[0] && s[1] && s[2] && !s[3] && !s[4] && !s[5]) {
     stringPreset.value = 'high';
-    customStrings.classList.add('hidden');
   } else if (!s[0] && s[1] && s[2] && s[3] && !s[4] && !s[5]) {
-    stringPreset.value = 'middle';
-    customStrings.classList.add('hidden');
+    stringPreset.value = 'highMid';
+  } else if (!s[0] && !s[1] && s[2] && s[3] && s[4] && !s[5]) {
+    stringPreset.value = 'lowMid';
   } else if (!s[0] && !s[1] && !s[2] && s[3] && s[4] && s[5]) {
     stringPreset.value = 'low';
-    customStrings.classList.add('hidden');
   } else {
-    stringPreset.value = 'custom';
-    customStrings.classList.remove('hidden');
+    stringPreset.value = 'all';
   }
 }
 

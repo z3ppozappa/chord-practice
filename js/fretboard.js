@@ -159,7 +159,7 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showD
     labelDegree.setAttribute('opacity', '0');
     group.appendChild(labelDegree);
 
-    if (active && note.chordTone) {
+    if (active) {
       group.style.cursor = 'pointer';
       group.addEventListener('click', () => {
         onNoteClick(idx, note, group);
@@ -170,14 +170,17 @@ function renderFretboard(containerId, pattern, activeStrings, onNoteClick, showD
     dots.push({ group, circle, labelChord, labelDegree, note, index: idx });
   });
 
-  // Fret numbers (rendered after dots so they appear on top)
+  // Fret numbers (marker frets prominent, others subdued)
+  const markerFrets = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
   for (let i = 0; i < numSpaces; i++) {
     const fretNum = firstWireFret + i + 1;
     const x = pad.left + (i + 0.5) * fretSpacing;
+    const isMarker = markerFrets.includes(fretNum);
     const label = createSVGElement('text', {
-      x, y: pad.top + 5 * stringSpacing + 30,
-      fill: '#555',
-      'font-size': '11',
+      x, y: pad.top + 5 * stringSpacing + 32,
+      fill: isMarker ? '#99a' : '#3a3a4a',
+      'font-size': isMarker ? '13' : '10',
+      'font-weight': isMarker ? '600' : '400',
       'font-family': 'system-ui, sans-serif',
       'text-anchor': 'middle',
       'pointer-events': 'none'

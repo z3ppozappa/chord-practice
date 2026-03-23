@@ -1,16 +1,23 @@
 // Game logic, state management, scoring, timer
 
+function getDefaultModeIndex(scaleKey) {
+  // major → Ionian (0), harmonicMinor → Harmonic Minor (0), pentatonic → random (null)
+  if (scaleKey === 'pentatonic' || scaleKey === 'random') return null;
+  return 0;
+}
+
 const state = {
   // Settings
   scaleKey: 'major',
-  modeIndex: null,           // null = random (key center mode)
+  modeIndex: 0,              // 0 = Ionian for major (default)
   positionOffset: 0,         // 0 = root (same as key center), -1 = random, 1-6 = offset from key center
   chordDegree: null,         // null = random, 0-6 = specific chord degree
   activeStrings: [true, true, true, true, true, true],
   showModeName: true,
-  showChordName: true,
-  showScaleDegrees: false,   // show scale degree labels on dots
+  showChordName: false,
+  showScaleDegrees: true,    // show scale degree labels on dots
   parentKeyDegrees: false,   // use parent key degrees instead of modal
+  keepProgression: false,    // keep same key/mode/root across rounds
 
   // Current round
   currentScale: null,
@@ -29,9 +36,10 @@ const state = {
   streak: 0,
   bestStreak: 0,
   round: 0,
+  strikes: 0,
+  roundPerfect: true,
 
   // Timer
-  sessionStartTime: null,
   roundStartTime: null,
   lastRoundTime: null,
   bestRoundTime: null,
@@ -47,9 +55,6 @@ function formatTime(ms) {
 }
 
 function startTimers() {
-  if (!state.sessionStartTime) {
-    state.sessionStartTime = Date.now();
-  }
   state.roundStartTime = Date.now();
 
   if (state.timerInterval) clearInterval(state.timerInterval);
@@ -65,6 +70,24 @@ function updateTimerDisplay() {
 }
 
 function pickRound() {
+  // Reuse previous key/mode/root when keepProgression is enabled and we have prior state
+  if (state.keepProgression && state.currentScale !== null) {
+    const scaleKey = state.currentScale;
+    const keyCenterMode = state.currentMode;
+    const rootFret = state.currentRootFret;
+    const numModes = SCALE_DEFS[scaleKey].modes.length;
+
+    let shapeMode;
+    if (state.positionOffset === -1) {
+      shapeMode = Math.floor(Math.random() * numModes);
+    } else {
+      shapeMode = (keyCenterMode + state.positionOffset) % numModes;
+    }
+
+    const shapeRootFret = getShapeRootFret(rootFret, scaleKey, keyCenterMode, shapeMode);
+    return { scaleKey, keyCenterMode, shapeMode, rootFret, shapeRootFret };
+  }
+
   let scaleKey = state.scaleKey;
   let keyCenterMode = state.modeIndex;
 
@@ -101,6 +124,8 @@ function pickRound() {
 function newRound() {
   state.roundComplete = false;
   state.foundIndices = new Set();
+  state.strikes = 0;
+  state.roundPerfect = true;
   state.round++;
 
   const { scaleKey, keyCenterMode, shapeMode, rootFret, shapeRootFret } = pickRound();
@@ -160,8 +185,12 @@ function newRound() {
   // Start timer
   startTimers();
 
-  // Hide next button
-  document.getElementById('next-btn').classList.add('hidden');
+  // Update strikes display
+  updateStrikesDisplay();
+
+  // Disable next button
+  const nextBtn = document.getElementById('next-btn');
+  nextBtn.disabled = true;
 }
 
 function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
@@ -193,18 +222,24 @@ function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
   if (state.chordToneIndices.length === 0) {
     findEl.textContent = 'No chord tones on these strings';
   } else if (state.showChordName) {
-    findEl.textContent = `Find ${numeral} (${chordName})`;
+    // Show triad notes in R-3-5 order
+    const modeIntervals = getModeIntervals(scaleKey, keyCenterMode);
+    const triadNotes = chordInfo.chordDegreeIndices.map(di =>
+      NOTE_NAMES[(4 + rootFret + modeIntervals[di]) % 12]
+    );
+    findEl.textContent = `Find ${numeral} (${triadNotes.join(' - ')})`;
   } else {
     findEl.textContent = `Find ${numeral}`;
   }
 
-  // Chord list for the key
+  // Chord list for the key (chord names above Roman numerals)
   const chordListEl = document.getElementById('chord-list');
   if (chordListEl) {
     const allChords = getAvailableChords(scaleKey, keyCenterMode);
     chordListEl.innerHTML = allChords.map(c => {
       const active = c.romanNumeral === numeral;
-      return `<span class="chord-item${active ? ' active' : ''}">${c.romanNumeral}</span>`;
+      const name = getChordRootName(rootFret, c.rootSemitones) + c.quality;
+      return `<span class="chord-item${active ? ' active' : ''}"><span class="chord-name">${name}</span><span class="chord-numeral">${c.romanNumeral}</span></span>`;
     }).join(' ');
   }
 
@@ -236,7 +271,14 @@ function updateProgress() {
   });
 
   progressEl.innerHTML = '';
-  for (const [type, { total, found }] of Object.entries(counts)) {
+  const order = ['R', 'b3', '3', 'b5', '5'];
+  const sortedTypes = Object.keys(counts).sort((a, b) => {
+    const ai = order.indexOf(a);
+    const bi = order.indexOf(b);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+  for (const type of sortedTypes) {
+    const { total, found } = counts[type];
     const span = document.createElement('span');
     span.className = 'progress-item';
     if (found === total) span.classList.add('complete');
@@ -255,13 +297,14 @@ function updateBatchDots() {
 
   container.classList.remove('batch-complete');
   const batchPos = (state.round - 1) % 10;
+  const completedInBatch = batchPos;
 
   container.innerHTML = '';
   for (let i = 0; i < 10; i++) {
     const dot = document.createElement('span');
     dot.className = 'batch-dot';
-    if (i < batchPos) dot.classList.add('filled');
-    if (i === batchPos) dot.classList.add('current');
+    if (i < completedInBatch) dot.classList.add('filled');
+    if (i === completedInBatch) dot.classList.add('current');
     container.appendChild(dot);
   }
 }
@@ -286,21 +329,89 @@ function handleNoteClick(idx, note, group) {
     }
   } else {
     // Wrong
-    state.streak = 0;
+    state.roundPerfect = false;
+    state.strikes++;
     flashDotWrong(dot);
     updateScoreDisplay();
     updateStreakDisplay();
+    updateStrikesDisplay();
+
+    if (state.strikes >= 3) {
+      strikeOut();
+    }
   }
+}
+
+function strikeOut() {
+  // Flash the whole fretboard red briefly, then reset all found progress
+  const container = document.getElementById('fretboard-container');
+  container.classList.add('strike-out');
+
+  // Reveal all chord tones briefly so the user can see what they missed
+  state.dots.forEach(dot => {
+    if (dot.note.chordTone && state.activeStrings[dot.note.string]) {
+      const circle = dot.group.querySelector('.dot-circle');
+      const labelChord = dot.group.querySelector('.dot-label-chord');
+      circle.setAttribute('fill', '#5c1a1a');
+      circle.setAttribute('stroke', '#f56565');
+      labelChord.setAttribute('opacity', '0.6');
+    }
+  });
+
+  // After a delay, reset the round (same chord, same position — try again)
+  setTimeout(() => {
+    container.classList.remove('strike-out');
+    state.foundIndices = new Set();
+    state.strikes = 0;
+
+    // Reset all dots to default appearance
+    state.dots.forEach(dot => {
+      if (state.activeStrings[dot.note.string]) {
+        const circle = dot.group.querySelector('.dot-circle');
+        const labelChord = dot.group.querySelector('.dot-label-chord');
+        const labelDegree = dot.group.querySelector('.dot-label-degree');
+        circle.setAttribute('fill', '#2a2a3a');
+        circle.setAttribute('stroke', '#4a4a5a');
+        circle.setAttribute('stroke-width', '1.5');
+        labelChord.setAttribute('opacity', '0');
+        labelDegree.setAttribute('opacity', '0');
+        dot.group.classList.remove('correct');
+        if (dot.note.chordTone) {
+          dot.group.style.cursor = 'pointer';
+        }
+      }
+    });
+
+    updateProgress();
+    updateStrikesDisplay();
+  }, 1200);
+}
+
+function updateStrikesDisplay() {
+  const el = document.getElementById('strikes');
+  if (!el) return;
+  const indicators = el.querySelectorAll('.strike-pip');
+  indicators.forEach((pip, i) => {
+    pip.classList.toggle('active', i < state.strikes);
+  });
 }
 
 function completeRound() {
   state.roundComplete = true;
   state.lastRoundTime = Date.now() - state.roundStartTime;
 
+  if (state.roundPerfect) {
+    state.streak++;
+  } else {
+    state.streak = 0;
+  }
+  if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+
   const isNewBest = state.bestRoundTime === null || state.lastRoundTime < state.bestRoundTime;
   if (isNewBest) state.bestRoundTime = state.lastRoundTime;
 
   state.roundTimes.push(state.lastRoundTime);
+  updateScoreDisplay();
 
   const roundTimeEl = document.getElementById('round-timer');
   roundTimeEl.textContent = formatTime(state.lastRoundTime);
@@ -316,24 +427,26 @@ function completeRound() {
     }
   }
 
-  // Update batch dots — fill current dot and flash at 10
-  const batchContainer = document.getElementById('batch-dots');
-  if (batchContainer) {
-    const dots = batchContainer.querySelectorAll('.batch-dot');
+  // Update batch dots — mark current as filled and check for batch complete
+  updateBatchDots();
+  const container = document.getElementById('batch-dots');
+  if (container) {
+    const dots = container.querySelectorAll('.batch-dot');
     const completedInBatch = ((state.round - 1) % 10) + 1;
     dots.forEach((dot, i) => {
       dot.classList.remove('current');
       if (i < completedInBatch) dot.classList.add('filled');
     });
+    // Flash green when batch of 10 is complete
     if (completedInBatch === 10) {
-      batchContainer.classList.add('batch-complete');
+      container.classList.add('batch-complete');
     }
   }
 
   updateBadges();
 
   const nextBtn = document.getElementById('next-btn');
-  nextBtn.classList.remove('hidden');
+  nextBtn.disabled = false;
   nextBtn.focus();
 }
 
@@ -369,7 +482,7 @@ function updateBadges() {
 
   container.innerHTML = '';
 
-  // Streak badges: one per 10 streak
+  // Streak badges: one per 10 perfect rounds
   const streakLevel = Math.floor(state.bestStreak / 10);
   if (streakLevel > 0) {
     const badge = document.createElement('span');
@@ -393,14 +506,15 @@ function loadSettings() {
     const saved = JSON.parse(localStorage.getItem('chordGameSettings'));
     if (saved) {
       state.scaleKey = saved.scaleKey || 'major';
-      state.modeIndex = saved.modeIndex !== undefined ? saved.modeIndex : null;
+      state.modeIndex = saved.modeIndex !== undefined ? saved.modeIndex : getDefaultModeIndex(state.scaleKey);
       state.positionOffset = saved.positionOffset !== undefined ? saved.positionOffset : 0;
       state.chordDegree = saved.chordDegree !== undefined ? saved.chordDegree : null;
       state.activeStrings = saved.activeStrings || [true, true, true, true, true, true];
       state.showModeName = saved.showModeName !== undefined ? saved.showModeName : true;
-      state.showChordName = saved.showChordName !== undefined ? saved.showChordName : true;
-      state.showScaleDegrees = saved.showScaleDegrees !== undefined ? saved.showScaleDegrees : false;
+      state.showChordName = saved.showChordName !== undefined ? saved.showChordName : false;
+      state.showScaleDegrees = saved.showScaleDegrees !== undefined ? saved.showScaleDegrees : true;
       state.parentKeyDegrees = saved.parentKeyDegrees !== undefined ? saved.parentKeyDegrees : false;
+      state.keepProgression = saved.keepProgression !== undefined ? saved.keepProgression : false;
     }
   } catch (e) { /* ignore */ }
 }
@@ -415,7 +529,8 @@ function saveSettings() {
     showModeName: state.showModeName,
     showChordName: state.showChordName,
     showScaleDegrees: state.showScaleDegrees,
-    parentKeyDegrees: state.parentKeyDegrees
+    parentKeyDegrees: state.parentKeyDegrees,
+    keepProgression: state.keepProgression
   }));
 }
 
@@ -423,7 +538,6 @@ function resetGame() {
   state.streak = 0;
   state.bestStreak = 0;
   state.round = 0;
-  state.sessionStartTime = null;
   state.lastRoundTime = null;
   state.bestRoundTime = null;
   state.roundTimes = [];

@@ -18,6 +18,8 @@ body {
   width: 100%;
   max-width: 800px;
   padding: 12px;
+  padding-top: max(12px, env(safe-area-inset-top));
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
 }
 
 /* Settings */
@@ -98,10 +100,20 @@ body {
   cursor: pointer;
 }
 
+/* Prompt row */
+#prompt-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 12px;
+  position: relative;
+}
+
 /* Prompt area */
 #prompt {
   text-align: center;
-  margin-bottom: 12px;
+  flex: 1;
+  min-width: 0;
 }
 
 #mode-name {
@@ -128,18 +140,37 @@ body {
   font-size: 14px;
   color: #8899bb;
   letter-spacing: 0.5px;
+  display: flex;
+  gap: 4px;
+  justify-content: center;
 }
 
 .chord-item {
-  display: inline-block;
-  padding: 1px 5px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 6px;
   border-radius: 3px;
+  line-height: 1.2;
+}
+
+.chord-name {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.chord-numeral {
+  font-size: 14px;
 }
 
 .chord-item.active {
   color: #e0e0f0;
   background: #2a3a6a;
   font-weight: 600;
+}
+
+.chord-item.active .chord-name {
+  opacity: 1;
 }
 
 #shape-info {
@@ -394,22 +425,51 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Strikes */
+.strike-pip {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #2a2a3a;
+  border: 1.5px solid #4a4a5a;
+  margin: 0 2px;
+  transition: all 0.2s ease;
+}
+
+.strike-pip.active {
+  background: #c53030;
+  border-color: #f56565;
+  box-shadow: 0 0 6px rgba(245, 101, 101, 0.5);
+}
+
+#fretboard-container.strike-out {
+  animation: strikeFlash 0.3s ease 2;
+}
+
+@keyframes strikeFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* Next button */
 #next-btn {
-  display: block;
-  margin: 16px auto 0;
-  padding: 10px 32px;
-  font-size: 16px;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  padding: 8px 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #e0e0f0;
   background: #2a3a6a;
   border: 1px solid #3a4a8a;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  white-space: nowrap;
 }
 
-#next-btn:hover {
+#next-btn:hover:not(:disabled) {
   background: #3a4a8a;
 }
 
@@ -418,8 +478,10 @@ body {
   outline-offset: 2px;
 }
 
-#next-btn.hidden {
-  display: none;
+#next-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+  pointer-events: none;
 }
 
 /* Responsive */
@@ -453,4 +515,13 @@ body {
     gap: 14px;
     font-size: 13px;
   }
+}
+
+#version-tag {
+  text-align: right;
+  padding: 4px 8px;
+  font-size: 10px;
+  color: #555;
+  cursor: default;
+  user-select: none;
 }
