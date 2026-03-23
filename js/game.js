@@ -371,6 +371,7 @@ function completeRound() {
   } else {
     state.streak = 0;
   }
+  if (state.streak > state.bestStreak) state.bestStreak = state.streak;
 
   const isNewBest = state.bestRoundTime === null || state.lastRoundTime < state.bestRoundTime;
   if (isNewBest) state.bestRoundTime = state.lastRoundTime;
@@ -432,12 +433,16 @@ function updateBadges() {
 
   container.innerHTML = '';
 
-  // Streak badges: one per 10 streak
-  const streakLevel = Math.floor(state.bestStreak / 10);
-  if (streakLevel > 0) {
+  // Perfect round streak badge
+  if (state.streak >= 3) {
     const badge = document.createElement('span');
     badge.className = 'badge badge-streak';
-    badge.textContent = `${streakLevel}0 streak`;
+    badge.textContent = `${state.streak} perfect`;
+    container.appendChild(badge);
+  } else if (state.bestStreak >= 3) {
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-streak faded';
+    badge.textContent = `best: ${state.bestStreak} perfect`;
     container.appendChild(badge);
   }
 

@@ -238,6 +238,10 @@ body {
   border: 1px solid #5a3a1a;
 }
 
+.badge.faded {
+  opacity: 0.5;
+}
+
 .badge-speed {
   color: #68d391;
   background: #1a2a20;
