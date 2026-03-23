@@ -433,3 +433,13 @@ body {
     font-size: 13px;
   }
 }
+
+#version-tag {
+  position: fixed;
+  bottom: 4px;
+  right: 8px;
+  font-size: 10px;
+  color: #555;
+  cursor: default;
+  user-select: none;
+}

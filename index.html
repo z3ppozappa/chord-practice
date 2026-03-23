@@ -123,6 +123,7 @@
 
       <button id="next-btn" class="hidden">Next Round (Space)</button>
     </main>
+    <div id="version-tag">v12</div>
   </div>
 
   <script src="js/scales.js"></script>
@@ -133,6 +134,25 @@
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js');
     }
+
+    // Triple-tap version tag to clear all caches and force reload
+    (function() {
+      const tag = document.getElementById('version-tag');
+      let taps = 0, timer;
+      tag.addEventListener('click', () => {
+        taps++;
+        clearTimeout(timer);
+        if (taps >= 3) {
+          taps = 0;
+          tag.textContent = 'clearing...';
+          caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+            .then(() => navigator.serviceWorker.getRegistrations())
+            .then(regs => Promise.all(regs.map(r => r.unregister())))
+            .then(() => location.reload(true));
+        }
+        timer = setTimeout(() => taps = 0, 600);
+      });
+    })();
   </script>
 </body>
 </html>
