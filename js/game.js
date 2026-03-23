@@ -282,8 +282,6 @@ function handleNoteClick(idx, note, group) {
     // Correct!
     state.foundIndices.add(idx);
     state.score++;
-    state.streak++;
-    if (state.streak > state.bestStreak) state.bestStreak = state.streak;
     markDotCorrect(dot, state.showScaleDegrees);
     updateProgress();
     updateScoreDisplay();
