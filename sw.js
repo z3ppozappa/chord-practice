@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chord-tones-v7';
+const CACHE_NAME = 'chord-tones-v8';
 const ASSETS = [
   './',
   './index.html',
