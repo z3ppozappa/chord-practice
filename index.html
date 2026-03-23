@@ -62,12 +62,15 @@
     </header>
 
     <main id="game">
-      <div id="prompt">
-        <span id="mode-name"></span>
-        <span id="shape-info" class="hidden"></span>
-        <span id="parent-key-info" class="hidden"></span>
-        <div id="find-prompt"></div>
-        <div id="chord-list"></div>
+      <div id="prompt-row">
+        <div id="prompt">
+          <span id="mode-name"></span>
+          <span id="shape-info" class="hidden"></span>
+          <span id="parent-key-info" class="hidden"></span>
+          <div id="find-prompt"></div>
+          <div id="chord-list"></div>
+        </div>
+        <button id="next-btn" class="hidden">Next Pattern ▶</button>
       </div>
 
       <div id="fretboard-container"></div>
@@ -108,9 +111,8 @@
         </div>
       </div>
 
-      <button id="next-btn" class="hidden">Next Round (Space)</button>
     </main>
-    <div id="version-tag">v15</div>
+    <div id="version-tag">v16</div>
   </div>
 
   <script src="js/scales.js"></script>
