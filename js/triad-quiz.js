@@ -24,6 +24,7 @@ const tqState = {
   drillOrder: [],         // shuffled order for key drill
 
   currentChord: null,     // { root, quality, name, thirdNote, fifthNote }
+  foundRoot: false,
   foundThird: false,
   foundFifth: false,
 
@@ -119,6 +120,7 @@ function tqBuildChord(scaleKey, modeIndex, rootNote, degree) {
 }
 
 function tqNewRound() {
+  tqState.foundRoot = false;
   tqState.foundThird = false;
   tqState.foundFifth = false;
   tqState.strikes = 0;
@@ -293,17 +295,8 @@ function tqRender() {
       text.textContent = displayName;
       group.appendChild(text);
 
-      // Pre-mark root
-      if (noteIdx === chord.root) {
-        circle.setAttribute('fill', '#1a3a5a');
-        circle.setAttribute('stroke', '#4488cc');
-        circle.setAttribute('stroke-width', '2');
-        text.setAttribute('fill', '#88ccff');
-        group.classList.add('root-selected');
-      } else {
-        group.style.cursor = 'pointer';
-        group.addEventListener('click', () => tqHandleDotTap(noteIdx, group));
-      }
+      group.style.cursor = 'pointer';
+      group.addEventListener('click', () => tqHandleDotTap(noteIdx, group));
 
       svg.appendChild(group);
     }
@@ -320,13 +313,15 @@ function tqRender() {
 
 function tqHandleDotTap(noteIndex, group) {
   const chord = tqState.currentChord;
-  if (tqState.foundThird && tqState.foundFifth) return;
+  if (tqState.foundRoot && tqState.foundThird && tqState.foundFifth) return;
 
+  const isRoot = noteIndex === chord.root && !tqState.foundRoot;
   const isThird = noteIndex === chord.thirdNote && !tqState.foundThird;
   const isFifth = noteIndex === chord.fifthNote && !tqState.foundFifth;
 
-  if (isThird || isFifth) {
+  if (isRoot || isThird || isFifth) {
     // Mark ALL dots with this note as correct
+    if (isRoot) tqState.foundRoot = true;
     if (isThird) tqState.foundThird = true;
     if (isFifth) tqState.foundFifth = true;
 
@@ -342,7 +337,7 @@ function tqHandleDotTap(noteIndex, group) {
       dot.style.cursor = 'default';
     });
 
-    if (tqState.foundThird && tqState.foundFifth) {
+    if (tqState.foundRoot && tqState.foundThird && tqState.foundFifth) {
       tqCompleteRound();
     }
   } else {
@@ -377,6 +372,7 @@ function tqStrikeOut() {
 
   // Reveal correct answers
   const revealNotes = [];
+  if (!tqState.foundRoot) revealNotes.push(chord.root);
   if (!tqState.foundThird) revealNotes.push(chord.thirdNote);
   if (!tqState.foundFifth) revealNotes.push(chord.fifthNote);
 
@@ -401,6 +397,7 @@ function tqStrikeOut() {
 
   // Reset after delay
   setTimeout(() => {
+    tqState.foundRoot = false;
     tqState.foundThird = false;
     tqState.foundFifth = false;
     tqState.strikes = 0;
