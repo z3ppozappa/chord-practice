@@ -1,5 +1,9 @@
 // Triad Quiz: memorize notes in triads
 
+const NOTE_DISPLAY_NAMES = [
+  'C', 'C♯\nD♭', 'D', 'D♯\nE♭', 'E', 'F', 'F♯\nG♭', 'G', 'G♯\nA♭', 'A', 'A♯\nB♭', 'B'
+];
+
 const TRIAD_INTERVALS = {
   '': [0, 4, 7],       // major
   'm': [0, 3, 7],      // minor
@@ -30,33 +34,15 @@ const tqState = {
   active: false           // is the quiz view active
 };
 
-// Generate all diatonic key options: root × (major modes + harmonic minor modes)
-function getTqKeyOptions() {
+// Scale/mode options for the drill dropdowns
+function getTqScaleOptions() {
   const options = [];
-  for (let root = 0; root < 12; root++) {
-    // Major modes
-    for (let m = 0; m < 7; m++) {
-      const modeName = SCALE_DEFS.major.modes[m];
-      const rootName = NOTE_NAMES[root];
-      options.push({
-        label: `${rootName} ${modeName}`,
-        scaleKey: 'major',
-        modeIndex: m,
-        root
-      });
-    }
-    // Harmonic minor modes
-    for (let m = 0; m < 7; m++) {
-      const modeName = SCALE_DEFS.harmonicMinor.modes[m];
-      const rootName = NOTE_NAMES[root];
-      options.push({
-        label: `${rootName} ${modeName}`,
-        scaleKey: 'harmonicMinor',
-        modeIndex: m,
-        root
-      });
-    }
-  }
+  SCALE_DEFS.major.modes.forEach((name, i) => {
+    options.push({ label: name, scaleKey: 'major', modeIndex: i });
+  });
+  SCALE_DEFS.harmonicMinor.modes.forEach((name, i) => {
+    options.push({ label: name, scaleKey: 'harmonicMinor', modeIndex: i });
+  });
   return options;
 }
 
@@ -152,8 +138,15 @@ function tqRender() {
   for (let i = 0; i < 12; i++) {
     const btn = document.createElement('button');
     btn.className = 'tq-note-btn';
-    btn.textContent = NOTE_NAMES[i];
     btn.dataset.note = i;
+
+    const display = NOTE_DISPLAY_NAMES[i];
+    if (display.includes('\n')) {
+      const [top, bottom] = display.split('\n');
+      btn.innerHTML = `<span class="note-name-top">${top}</span><span class="note-name-alt">${bottom}</span>`;
+    } else {
+      btn.textContent = display;
+    }
 
     if (i === chord.root) {
       // Root is auto-selected
@@ -291,37 +284,51 @@ function tqStart() {
 
 function initTriadQuizUI() {
   const modeSelect = document.getElementById('tq-mode');
-  const keySelect = document.getElementById('tq-key');
+  const rootSelect = document.getElementById('tq-root');
+  const scaleSelect = document.getElementById('tq-scale');
 
-  // Populate key options
-  function populateKeyOptions() {
-    keySelect.innerHTML = '';
-    const options = getTqKeyOptions();
+  // Populate root note options
+  NOTE_NAMES.forEach((name, i) => {
+    const el = document.createElement('option');
+    el.value = i;
+    el.textContent = NOTE_DISPLAY_NAMES[i].replace('\n', '/');
+    rootSelect.appendChild(el);
+  });
 
-    // Group by scale
-    const majorGroup = document.createElement('optgroup');
-    majorGroup.label = 'Major Modes';
-    const hmGroup = document.createElement('optgroup');
-    hmGroup.label = 'Harmonic Minor Modes';
+  // Populate scale/mode options
+  const scaleOptions = getTqScaleOptions();
+  const majorGroup = document.createElement('optgroup');
+  majorGroup.label = 'Major Modes';
+  const hmGroup = document.createElement('optgroup');
+  hmGroup.label = 'Harmonic Minor Modes';
 
-    options.forEach((opt, i) => {
-      const el = document.createElement('option');
-      el.value = i;
-      el.textContent = opt.label;
-      if (opt.scaleKey === 'major') majorGroup.appendChild(el);
-      else hmGroup.appendChild(el);
-    });
+  scaleOptions.forEach((opt, i) => {
+    const el = document.createElement('option');
+    el.value = i;
+    el.textContent = opt.label;
+    if (opt.scaleKey === 'major') majorGroup.appendChild(el);
+    else hmGroup.appendChild(el);
+  });
+  scaleSelect.appendChild(majorGroup);
+  scaleSelect.appendChild(hmGroup);
 
-    keySelect.appendChild(majorGroup);
-    keySelect.appendChild(hmGroup);
+  function applyDrillSettings() {
+    tqState.drillRoot = parseInt(rootSelect.value);
+    const opt = scaleOptions[parseInt(scaleSelect.value)];
+    if (opt) {
+      tqState.drillScaleKey = opt.scaleKey;
+      tqState.drillModeIndex = opt.modeIndex;
+    }
+    tqState.drillDegreeIndex = 0;
+    tqState.drillOrder = [];
+    if (tqState.active) tqNewRound();
   }
-
-  populateKeyOptions();
-  const allKeyOptions = getTqKeyOptions();
 
   modeSelect.addEventListener('change', () => {
     tqState.mode = modeSelect.value;
-    keySelect.parentElement.style.display = tqState.mode === 'keyDrill' ? '' : 'none';
+    const show = tqState.mode === 'keyDrill' ? '' : 'none';
+    rootSelect.parentElement.style.display = show;
+    scaleSelect.parentElement.style.display = show;
     if (tqState.active) {
       tqState.drillDegreeIndex = 0;
       tqState.drillOrder = [];
@@ -329,18 +336,10 @@ function initTriadQuizUI() {
     }
   });
 
-  keySelect.addEventListener('change', () => {
-    const opt = allKeyOptions[parseInt(keySelect.value)];
-    if (opt) {
-      tqState.drillScaleKey = opt.scaleKey;
-      tqState.drillModeIndex = opt.modeIndex;
-      tqState.drillRoot = opt.root;
-      tqState.drillDegreeIndex = 0;
-      tqState.drillOrder = [];
-      if (tqState.active) tqNewRound();
-    }
-  });
+  rootSelect.addEventListener('change', applyDrillSettings);
+  scaleSelect.addEventListener('change', applyDrillSettings);
 
-  // Default: hide key selector in random mode
-  keySelect.parentElement.style.display = 'none';
+  // Default: hide drill selectors in random mode
+  rootSelect.parentElement.style.display = 'none';
+  scaleSelect.parentElement.style.display = 'none';
 }

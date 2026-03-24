@@ -588,12 +588,12 @@ body {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  max-width: 320px;
+  max-width: 360px;
   margin: 0 auto 24px;
 }
 
 .tq-note-btn {
-  padding: 14px 8px;
+  padding: 18px 8px;
   font-size: 16px;
   font-weight: 600;
   color: #c0c0d8;
@@ -604,6 +604,21 @@ body {
   transition: all 0.15s ease;
   user-select: none;
   -webkit-user-select: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+}
+
+.tq-note-btn .note-name-top {
+  line-height: 1.2;
+}
+
+.tq-note-btn .note-name-alt {
+  font-size: 12px;
+  opacity: 0.55;
+  line-height: 1.2;
 }
 
 @media (hover: hover) {
