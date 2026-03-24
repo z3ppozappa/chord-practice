@@ -159,9 +159,9 @@ function tqRender() {
   const numFrets = fretMax - fretMin;
   const numStrings = TQ_STRINGS.length; // 4
 
-  const pad = { top: 30, bottom: 45, left: 40, right: 20 };
-  const stringSpacing = 40;
-  const fretSpacing = 60;
+  const pad = { top: 40, bottom: 58, left: 52, right: 26 };
+  const stringSpacing = 52;
+  const fretSpacing = 78;
   const width = pad.left + numFrets * fretSpacing + pad.right;
   const height = pad.top + (numStrings - 1) * stringSpacing + pad.bottom;
 
@@ -271,13 +271,13 @@ function tqRender() {
 
       // Hit area
       const hitArea = createSVGElement('circle', {
-        cx, cy: y, r: 22, fill: 'transparent', class: 'hit-area'
+        cx, cy: y, r: 28, fill: 'transparent', class: 'hit-area'
       });
       group.appendChild(hitArea);
 
       // Visible circle
       const circle = createSVGElement('circle', {
-        cx, cy: y, r: 17, class: 'tq-dot-circle',
+        cx, cy: y, r: 22, class: 'tq-dot-circle',
         fill: '#1e1e35', stroke: '#333355', 'stroke-width': '1.5'
       });
       group.appendChild(circle);
@@ -286,7 +286,7 @@ function tqRender() {
       const text = createSVGElement('text', {
         x: cx, y: y + 5,
         fill: '#c0c0d8',
-        'font-size': '12',
+        'font-size': '14',
         'font-weight': '600',
         'font-family': 'system-ui, sans-serif',
         'text-anchor': 'middle',
