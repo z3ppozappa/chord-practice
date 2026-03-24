@@ -584,77 +584,18 @@ body {
   letter-spacing: 1px;
 }
 
-#tq-note-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  max-width: 360px;
+#tq-fretboard {
+  width: 100%;
+  overflow-x: auto;
   margin: 0 auto 24px;
+  -webkit-overflow-scrolling: touch;
 }
 
-.tq-note-btn {
-  padding: 18px 8px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #c0c0d8;
-  background: #1e1e35;
-  border: 2px solid #333355;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  user-select: none;
-  -webkit-user-select: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 56px;
-}
-
-.tq-note-btn .note-name-top,
-.tq-note-btn .note-name-alt {
-  line-height: 1.2;
-}
-
-@media (hover: hover) {
-  .tq-note-btn:hover:not(:disabled) {
-    background: #2a2a45;
-    border-color: #5566aa;
-  }
-}
-
-.tq-note-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.tq-note-btn.root-selected {
-  background: #1a3a5a;
-  border-color: #4488cc;
-  color: #88ccff;
-  cursor: default;
-}
-
-.tq-note-btn.correct {
-  background: #1a5c3a;
-  border-color: #48bb78;
-  color: #a8f0c8;
-}
-
-.tq-note-btn.wrong {
-  background: #5c1a1a;
-  border-color: #f56565;
-  color: #fca5a5;
-}
-
-.tq-note-btn.revealed {
-  background: #3a3a1a;
-  border-color: #d4a048;
-  color: #f6d88a;
-}
-
-.tq-note-btn:disabled:not(.root-selected):not(.correct):not(.revealed) {
-  opacity: 0.4;
-  cursor: default;
+.tq-fretboard-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 240px;
 }
 
 #tq-feedback {

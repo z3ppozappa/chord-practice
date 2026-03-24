@@ -11,6 +11,10 @@ const TRIAD_INTERVALS = {
   '+': [0, 4, 8]       // augmented
 };
 
+// Top 4 strings: D(3), G(2), B(1), e(0) — indices into STRING_SEMITONES/STRING_LABELS
+const TQ_STRINGS = [0, 1, 2, 3]; // high e, B, G, D
+const TQ_STRING_LABELS = ['e', 'B', 'G', 'D'];
+
 const tqState = {
   mode: 'random',         // 'random' or 'keyDrill'
   drillScaleKey: 'major',
@@ -31,7 +35,10 @@ const tqState = {
   roundStartTime: null,
   bestRoundTime: null,
   timerInterval: null,
-  active: false           // is the quiz view active
+  active: false,
+
+  fretMin: 0,
+  fretMax: 6
 };
 
 // Scale/mode options for the drill dropdowns
@@ -124,6 +131,16 @@ function tqNewRound() {
   tqUpdateStrikesDisplay();
 }
 
+// Get the note (0-11) at a given string index and fret
+function tqNoteAt(stringIdx, fret) {
+  return (STRING_SEMITONES[stringIdx] + fret) % 12;
+}
+
+// Get display name for a note index (short, single line with enharmonic)
+function tqNoteName(noteIdx) {
+  return NOTE_DISPLAY_NAMES[noteIdx].replace('\n', '/');
+}
+
 function tqRender() {
   const chord = tqState.currentChord;
 
@@ -131,33 +148,168 @@ function tqRender() {
   const promptEl = document.getElementById('tq-prompt');
   promptEl.innerHTML = `<span class="tq-chord-name">${chord.name}</span><span class="tq-quality-label">${chord.qualityLabel}</span>`;
 
-  // Note grid
-  const gridEl = document.getElementById('tq-note-grid');
-  gridEl.innerHTML = '';
+  // Fretboard
+  const container = document.getElementById('tq-fretboard');
+  container.innerHTML = '';
 
-  for (let i = 0; i < 12; i++) {
-    const btn = document.createElement('button');
-    btn.className = 'tq-note-btn';
-    btn.dataset.note = i;
+  const fretMin = tqState.fretMin;
+  const fretMax = tqState.fretMax;
+  const numFrets = fretMax - fretMin;
+  const numStrings = TQ_STRINGS.length; // 4
 
-    const display = NOTE_DISPLAY_NAMES[i];
-    if (display.includes('\n')) {
-      const [top, bottom] = display.split('\n');
-      btn.innerHTML = `<span class="note-name-top">${top}</span><span class="note-name-alt">${bottom}</span>`;
-    } else {
-      btn.textContent = display;
+  const pad = { top: 30, bottom: 45, left: 40, right: 20 };
+  const stringSpacing = 40;
+  const fretSpacing = 60;
+  const width = pad.left + numFrets * fretSpacing + pad.right;
+  const height = pad.top + (numStrings - 1) * stringSpacing + pad.bottom;
+
+  const svg = createSVGElement('svg', {
+    class: 'tq-fretboard-svg',
+    viewBox: `0 0 ${width} ${height}`,
+    preserveAspectRatio: 'xMidYMid meet'
+  });
+
+  // Fret markers (dots at 3,5,7,9,12,15,17,19,21,24)
+  const singleMarkers = [3, 5, 7, 9, 15, 17, 19, 21];
+  const doubleMarkers = [12, 24];
+  const midY = pad.top + (numStrings - 1) * stringSpacing / 2;
+
+  for (let i = 0; i < numFrets; i++) {
+    const fretNum = fretMin + i + 1;
+    const cx = pad.left + (i + 0.5) * fretSpacing;
+
+    if (doubleMarkers.includes(fretNum)) {
+      svg.appendChild(createSVGElement('circle', {
+        cx, cy: midY - stringSpacing * 0.6, r: 4, fill: '#252535'
+      }));
+      svg.appendChild(createSVGElement('circle', {
+        cx, cy: midY + stringSpacing * 0.6, r: 4, fill: '#252535'
+      }));
+    } else if (singleMarkers.includes(fretNum)) {
+      svg.appendChild(createSVGElement('circle', {
+        cx, cy: midY, r: 4, fill: '#252535'
+      }));
     }
-
-    if (i === chord.root) {
-      // Root is auto-selected
-      btn.classList.add('root-selected');
-      btn.disabled = true;
-    } else {
-      btn.addEventListener('click', () => tqHandleNoteTap(i, btn));
-    }
-
-    gridEl.appendChild(btn);
   }
+
+  // Fret wires
+  const numWires = numFrets + 1;
+  for (let i = 0; i < numWires; i++) {
+    const fretNum = fretMin + i;
+    const x = pad.left + i * fretSpacing;
+    const isNut = fretNum === 0;
+    svg.appendChild(createSVGElement('line', {
+      x1: x, y1: pad.top,
+      x2: x, y2: pad.top + (numStrings - 1) * stringSpacing,
+      stroke: isNut ? '#ccc' : '#444',
+      'stroke-width': isNut ? 5 : 1.5
+    }));
+  }
+
+  // Strings
+  for (let si = 0; si < numStrings; si++) {
+    const y = pad.top + si * stringSpacing;
+    const globalStringIdx = TQ_STRINGS[si];
+    const thickness = 0.8 + (5 - globalStringIdx) * 0.25;
+    svg.appendChild(createSVGElement('line', {
+      x1: pad.left, y1: y,
+      x2: pad.left + numFrets * fretSpacing, y2: y,
+      stroke: '#888',
+      'stroke-width': thickness
+    }));
+
+    // String label
+    const label = createSVGElement('text', {
+      x: pad.left - 20, y: y + 5,
+      fill: '#777',
+      'font-size': '13',
+      'font-family': 'system-ui, sans-serif',
+      'text-anchor': 'middle'
+    });
+    label.textContent = TQ_STRING_LABELS[si];
+    svg.appendChild(label);
+  }
+
+  // Fret numbers
+  const markerFrets = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
+  for (let i = 0; i < numFrets; i++) {
+    const fretNum = fretMin + i + 1;
+    const x = pad.left + (i + 0.5) * fretSpacing;
+    const isMarker = markerFrets.includes(fretNum);
+    const label = createSVGElement('text', {
+      x, y: pad.top + (numStrings - 1) * stringSpacing + 28,
+      fill: isMarker ? '#99a' : '#3a3a4a',
+      'font-size': isMarker ? '13' : '10',
+      'font-weight': isMarker ? '600' : '400',
+      'font-family': 'system-ui, sans-serif',
+      'text-anchor': 'middle',
+      'pointer-events': 'none'
+    });
+    label.textContent = fretNum;
+    svg.appendChild(label);
+  }
+
+  // Note dots — one at every fret/string intersection
+  for (let si = 0; si < numStrings; si++) {
+    const globalStringIdx = TQ_STRINGS[si];
+    const y = pad.top + si * stringSpacing;
+
+    for (let i = 0; i < numFrets; i++) {
+      const fretNum = fretMin + i + 1;
+      const cx = pad.left + (i + 0.5) * fretSpacing;
+      const noteIdx = tqNoteAt(globalStringIdx, fretNum);
+      const displayName = tqNoteName(noteIdx);
+
+      const group = createSVGElement('g', {
+        class: 'tq-dot',
+        'data-note': noteIdx,
+        'data-string': si,
+        'data-fret': fretNum
+      });
+
+      // Hit area
+      const hitArea = createSVGElement('circle', {
+        cx, cy: y, r: 22, fill: 'transparent', class: 'hit-area'
+      });
+      group.appendChild(hitArea);
+
+      // Visible circle
+      const circle = createSVGElement('circle', {
+        cx, cy: y, r: 17, class: 'tq-dot-circle',
+        fill: '#1e1e35', stroke: '#333355', 'stroke-width': '1.5'
+      });
+      group.appendChild(circle);
+
+      // Note name label
+      const text = createSVGElement('text', {
+        x: cx, y: y + 5,
+        fill: '#c0c0d8',
+        'font-size': '12',
+        'font-weight': '600',
+        'font-family': 'system-ui, sans-serif',
+        'text-anchor': 'middle',
+        'pointer-events': 'none'
+      });
+      text.textContent = displayName;
+      group.appendChild(text);
+
+      // Pre-mark root
+      if (noteIdx === chord.root) {
+        circle.setAttribute('fill', '#1a3a5a');
+        circle.setAttribute('stroke', '#4488cc');
+        circle.setAttribute('stroke-width', '2');
+        text.setAttribute('fill', '#88ccff');
+        group.classList.add('root-selected');
+      } else {
+        group.style.cursor = 'pointer';
+        group.addEventListener('click', () => tqHandleDotTap(noteIdx, group));
+      }
+
+      svg.appendChild(group);
+    }
+  }
+
+  container.appendChild(svg);
 
   // Feedback
   document.getElementById('tq-feedback').textContent = '';
@@ -166,7 +318,7 @@ function tqRender() {
   document.getElementById('tq-streak').textContent = tqState.streak;
 }
 
-function tqHandleNoteTap(noteIndex, btn) {
+function tqHandleDotTap(noteIndex, group) {
   const chord = tqState.currentChord;
   if (tqState.foundThird && tqState.foundFifth) return;
 
@@ -174,11 +326,21 @@ function tqHandleNoteTap(noteIndex, btn) {
   const isFifth = noteIndex === chord.fifthNote && !tqState.foundFifth;
 
   if (isThird || isFifth) {
-    // Correct
-    btn.classList.add('correct');
-    btn.disabled = true;
+    // Mark ALL dots with this note as correct
     if (isThird) tqState.foundThird = true;
     if (isFifth) tqState.foundFifth = true;
+
+    const allDots = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIndex}"]`);
+    allDots.forEach(dot => {
+      const circle = dot.querySelector('.tq-dot-circle');
+      const text = dot.querySelector('text');
+      circle.setAttribute('fill', '#1a5c3a');
+      circle.setAttribute('stroke', '#48bb78');
+      circle.setAttribute('stroke-width', '2');
+      text.setAttribute('fill', '#a8f0c8');
+      dot.classList.add('correct');
+      dot.style.cursor = 'default';
+    });
 
     if (tqState.foundThird && tqState.foundFifth) {
       tqCompleteRound();
@@ -187,8 +349,21 @@ function tqHandleNoteTap(noteIndex, btn) {
     // Wrong
     tqState.roundPerfect = false;
     tqState.strikes++;
-    btn.classList.add('wrong');
-    setTimeout(() => btn.classList.remove('wrong'), 400);
+
+    // Flash this specific dot red
+    const circle = group.querySelector('.tq-dot-circle');
+    const text = group.querySelector('text');
+    circle.setAttribute('fill', '#5c1a1a');
+    circle.setAttribute('stroke', '#f56565');
+    text.setAttribute('fill', '#fca5a5');
+    setTimeout(() => {
+      if (!group.classList.contains('correct') && !group.classList.contains('root-selected')) {
+        circle.setAttribute('fill', '#1e1e35');
+        circle.setAttribute('stroke', '#333355');
+        text.setAttribute('fill', '#c0c0d8');
+      }
+    }, 400);
+
     tqUpdateStrikesDisplay();
 
     if (tqState.strikes >= 3) {
@@ -199,16 +374,29 @@ function tqHandleNoteTap(noteIndex, btn) {
 
 function tqStrikeOut() {
   const chord = tqState.currentChord;
-  const gridEl = document.getElementById('tq-note-grid');
-  const btns = gridEl.querySelectorAll('.tq-note-btn');
 
   // Reveal correct answers
-  btns.forEach(btn => {
-    const n = parseInt(btn.dataset.note);
-    if ((n === chord.thirdNote && !tqState.foundThird) || (n === chord.fifthNote && !tqState.foundFifth)) {
-      btn.classList.add('revealed');
-    }
-    btn.disabled = true;
+  const revealNotes = [];
+  if (!tqState.foundThird) revealNotes.push(chord.thirdNote);
+  if (!tqState.foundFifth) revealNotes.push(chord.fifthNote);
+
+  revealNotes.forEach(noteIdx => {
+    const dots = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIdx}"]`);
+    dots.forEach(dot => {
+      const circle = dot.querySelector('.tq-dot-circle');
+      const text = dot.querySelector('text');
+      circle.setAttribute('fill', '#3a3a1a');
+      circle.setAttribute('stroke', '#d4a048');
+      circle.setAttribute('stroke-width', '2');
+      text.setAttribute('fill', '#f6d88a');
+      dot.classList.add('revealed');
+    });
+  });
+
+  // Disable all dots
+  document.querySelectorAll('#tq-fretboard .tq-dot').forEach(dot => {
+    dot.style.cursor = 'default';
+    dot.style.pointerEvents = 'none';
   });
 
   // Reset after delay
@@ -286,6 +474,7 @@ function initTriadQuizUI() {
   const modeSelect = document.getElementById('tq-mode');
   const rootSelect = document.getElementById('tq-root');
   const scaleSelect = document.getElementById('tq-scale');
+  const posSelect = document.getElementById('tq-position');
 
   // Populate root note options
   NOTE_NAMES.forEach((name, i) => {
@@ -311,6 +500,16 @@ function initTriadQuizUI() {
   });
   scaleSelect.appendChild(majorGroup);
   scaleSelect.appendChild(hmGroup);
+
+  // Position dropdown handler
+  function applyPosition() {
+    const [min, max] = posSelect.value.split('-').map(Number);
+    tqState.fretMin = min;
+    tqState.fretMax = max;
+    if (tqState.active) tqRender();
+  }
+  posSelect.addEventListener('change', applyPosition);
+  applyPosition(); // set initial
 
   function applyDrillSettings() {
     tqState.drillRoot = parseInt(rootSelect.value);
