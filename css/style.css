@@ -606,9 +606,11 @@ body {
   -webkit-user-select: none;
 }
 
-.tq-note-btn:hover:not(:disabled) {
-  background: #2a2a45;
-  border-color: #5566aa;
+@media (hover: hover) {
+  .tq-note-btn:hover:not(:disabled) {
+    background: #2a2a45;
+    border-color: #5566aa;
+  }
 }
 
 .tq-note-btn:active:not(:disabled) {
