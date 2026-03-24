@@ -611,13 +611,8 @@ body {
   min-height: 56px;
 }
 
-.tq-note-btn .note-name-top {
-  line-height: 1.2;
-}
-
+.tq-note-btn .note-name-top,
 .tq-note-btn .note-name-alt {
-  font-size: 12px;
-  opacity: 0.55;
   line-height: 1.2;
 }
 
