@@ -151,7 +151,7 @@ function tqRender() {
 
   // Prompt
   const promptEl = document.getElementById('tq-prompt');
-  promptEl.innerHTML = `<span class="tq-chord-name">${chord.name}</span><span class="tq-quality-label">${chord.qualityLabel}</span>`;
+  promptEl.innerHTML = `<span class="tq-chord-name">${chord.name}</span>`;
 
   // Fretboard
   const container = document.getElementById('tq-fretboard');
@@ -316,12 +316,28 @@ function tqRender() {
 
   container.appendChild(svg);
   tqState.remainingDots = chordToneDotCount;
+  tqState.totalDots = chordToneDotCount;
 
   // Feedback
   document.getElementById('tq-feedback').textContent = '';
 
   // Update streak
   document.getElementById('tq-streak').textContent = tqState.streak;
+
+  // Update find-all counter
+  tqUpdateFindAllCount();
+}
+
+function tqUpdateFindAllCount() {
+  const el = document.getElementById('tq-find-all-count');
+  if (!el) return;
+  if (tqState.findAll && tqState.active) {
+    const found = tqState.totalDots - tqState.remainingDots;
+    el.textContent = `${found} / ${tqState.totalDots}`;
+    el.style.display = '';
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 function tqMarkDotCorrect(dot) {
@@ -346,6 +362,7 @@ function tqHandleDotTap(noteIndex, group) {
       // Find-all mode: mark only the tapped dot
       tqMarkDotCorrect(group);
       tqState.remainingDots--;
+      tqUpdateFindAllCount();
 
       // Track per-note completion for non-findAll state checks
       const noteStillNeeded = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIndex}"]:not(.correct)`);
