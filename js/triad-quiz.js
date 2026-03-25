@@ -236,23 +236,26 @@ function tqRender() {
     svg.appendChild(label);
   }
 
-  // Fret numbers
+  // Fret numbers (above and below)
   const markerFrets = [3, 5, 7, 9, 12, 15, 17, 19, 21, 24];
   for (let i = 0; i < numFrets; i++) {
     const fretNum = fretMin + i + 1;
     const x = pad.left + (i + 0.5) * fretSpacing;
     const isMarker = markerFrets.includes(fretNum);
-    const label = createSVGElement('text', {
-      x, y: pad.top + (totalStrings - 1) * stringSpacing + 45,
+    const attrs = {
       fill: isMarker ? '#99a' : '#3a3a4a',
       'font-size': isMarker ? '13' : '10',
       'font-weight': isMarker ? '600' : '400',
       'font-family': 'system-ui, sans-serif',
       'text-anchor': 'middle',
       'pointer-events': 'none'
-    });
-    label.textContent = fretNum;
-    svg.appendChild(label);
+    };
+    const above = createSVGElement('text', { x, y: pad.top - 14, ...attrs });
+    above.textContent = fretNum;
+    svg.appendChild(above);
+    const below = createSVGElement('text', { x, y: pad.top + (totalStrings - 1) * stringSpacing + 45, ...attrs });
+    below.textContent = fretNum;
+    svg.appendChild(below);
   }
 
   // Note dots — one at every fret/string intersection (top 4 strings only)
