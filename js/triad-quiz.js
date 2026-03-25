@@ -136,8 +136,9 @@ function tqNewRound() {
 }
 
 // Get the note (0-11) at a given string index and fret
+// STRING_SEMITONES are relative to low E; add 4 because E=4 in C=0 system
 function tqNoteAt(stringIdx, fret) {
-  return (STRING_SEMITONES[stringIdx] + fret) % 12;
+  return (STRING_SEMITONES[stringIdx] + fret + 4) % 12;
 }
 
 // Get display name for a note index (short, single line with enharmonic)
