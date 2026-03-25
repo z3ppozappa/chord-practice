@@ -162,7 +162,7 @@ function tqRender() {
   const numActiveStrings = TQ_STRINGS.length; // 4 (e, B, G, D)
   const totalStrings = 6; // show all 6 strings visually
 
-  const pad = { top: 65, bottom: 58, left: 52, right: 26 };
+  const pad = { top: 80, bottom: 58, left: 52, right: 26 };
   const stringSpacing = 52;
   const fretSpacing = 78;
   const width = pad.left + numFrets * fretSpacing + pad.right;
