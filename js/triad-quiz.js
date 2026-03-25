@@ -37,6 +37,8 @@ const tqState = {
   bestRoundTime: null,
   timerInterval: null,
   active: false,
+  findAll: false,
+  remainingDots: 0,    // count of unfound dots in findAll mode
 
   fretMin: 0,
   fretMax: 6
@@ -254,6 +256,7 @@ function tqRender() {
   }
 
   // Note dots — one at every fret/string intersection (top 4 strings only)
+  let chordToneDotCount = 0;
   for (let si = 0; si < numActiveStrings; si++) {
     const globalStringIdx = TQ_STRINGS[si];
     const y = pad.top + si * stringSpacing;
@@ -262,6 +265,9 @@ function tqRender() {
       const fretNum = fretMin + i + 1;
       const cx = pad.left + (i + 0.5) * fretSpacing;
       const noteIdx = tqNoteAt(globalStringIdx, fretNum);
+      if (noteIdx === chord.root || noteIdx === chord.thirdNote || noteIdx === chord.fifthNote) {
+        chordToneDotCount++;
+      }
       const displayName = tqNoteName(noteIdx);
 
       const group = createSVGElement('g', {
@@ -305,6 +311,7 @@ function tqRender() {
   }
 
   container.appendChild(svg);
+  tqState.remainingDots = chordToneDotCount;
 
   // Feedback
   document.getElementById('tq-feedback').textContent = '';
@@ -313,34 +320,52 @@ function tqRender() {
   document.getElementById('tq-streak').textContent = tqState.streak;
 }
 
+function tqMarkDotCorrect(dot) {
+  const circle = dot.querySelector('.tq-dot-circle');
+  const text = dot.querySelector('text');
+  circle.setAttribute('fill', '#1a5c3a');
+  circle.setAttribute('stroke', '#48bb78');
+  circle.setAttribute('stroke-width', '2');
+  text.setAttribute('fill', '#a8f0c8');
+  dot.classList.add('correct');
+  dot.style.cursor = 'default';
+}
+
 function tqHandleDotTap(noteIndex, group) {
   const chord = tqState.currentChord;
-  if (tqState.foundRoot && tqState.foundThird && tqState.foundFifth) return;
+  if (group.classList.contains('correct')) return;
 
-  const isRoot = noteIndex === chord.root && !tqState.foundRoot;
-  const isThird = noteIndex === chord.thirdNote && !tqState.foundThird;
-  const isFifth = noteIndex === chord.fifthNote && !tqState.foundFifth;
+  const isChordTone = noteIndex === chord.root || noteIndex === chord.thirdNote || noteIndex === chord.fifthNote;
 
-  if (isRoot || isThird || isFifth) {
-    // Mark ALL dots with this note as correct
-    if (isRoot) tqState.foundRoot = true;
-    if (isThird) tqState.foundThird = true;
-    if (isFifth) tqState.foundFifth = true;
+  if (isChordTone) {
+    if (tqState.findAll) {
+      // Find-all mode: mark only the tapped dot
+      tqMarkDotCorrect(group);
+      tqState.remainingDots--;
 
-    const allDots = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIndex}"]`);
-    allDots.forEach(dot => {
-      const circle = dot.querySelector('.tq-dot-circle');
-      const text = dot.querySelector('text');
-      circle.setAttribute('fill', '#1a5c3a');
-      circle.setAttribute('stroke', '#48bb78');
-      circle.setAttribute('stroke-width', '2');
-      text.setAttribute('fill', '#a8f0c8');
-      dot.classList.add('correct');
-      dot.style.cursor = 'default';
-    });
+      // Track per-note completion for non-findAll state checks
+      const noteStillNeeded = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIndex}"]:not(.correct)`);
+      if (noteStillNeeded.length === 0) {
+        if (noteIndex === chord.root) tqState.foundRoot = true;
+        if (noteIndex === chord.thirdNote) tqState.foundThird = true;
+        if (noteIndex === chord.fifthNote) tqState.foundFifth = true;
+      }
 
-    if (tqState.foundRoot && tqState.foundThird && tqState.foundFifth) {
-      tqCompleteRound();
+      if (tqState.remainingDots <= 0) {
+        tqCompleteRound();
+      }
+    } else {
+      // Normal mode: mark all instances of this note
+      if (noteIndex === chord.root) tqState.foundRoot = true;
+      if (noteIndex === chord.thirdNote) tqState.foundThird = true;
+      if (noteIndex === chord.fifthNote) tqState.foundFifth = true;
+
+      const allDots = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIndex}"]`);
+      allDots.forEach(dot => tqMarkDotCorrect(dot));
+
+      if (tqState.foundRoot && tqState.foundThird && tqState.foundFifth) {
+        tqCompleteRound();
+      }
     }
   } else {
     // Wrong
@@ -354,7 +379,7 @@ function tqHandleDotTap(noteIndex, group) {
     circle.setAttribute('stroke', '#f56565');
     text.setAttribute('fill', '#fca5a5');
     setTimeout(() => {
-      if (!group.classList.contains('correct') && !group.classList.contains('root-selected')) {
+      if (!group.classList.contains('correct')) {
         circle.setAttribute('fill', '#1e1e35');
         circle.setAttribute('stroke', '#333355');
         text.setAttribute('fill', '#c0c0d8');
@@ -372,14 +397,10 @@ function tqHandleDotTap(noteIndex, group) {
 function tqStrikeOut() {
   const chord = tqState.currentChord;
 
-  // Reveal correct answers
-  const revealNotes = [];
-  if (!tqState.foundRoot) revealNotes.push(chord.root);
-  if (!tqState.foundThird) revealNotes.push(chord.thirdNote);
-  if (!tqState.foundFifth) revealNotes.push(chord.fifthNote);
-
+  // Reveal correct answers (only unfound dots)
+  const revealNotes = [chord.root, chord.thirdNote, chord.fifthNote];
   revealNotes.forEach(noteIdx => {
-    const dots = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIdx}"]`);
+    const dots = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIdx}"]:not(.correct)`);
     dots.forEach(dot => {
       const circle = dot.querySelector('.tq-dot-circle');
       const text = dot.querySelector('text');
@@ -474,6 +495,11 @@ function initTriadQuizUI() {
   const rootSelect = document.getElementById('tq-root');
   const scaleSelect = document.getElementById('tq-scale');
   const posSelect = document.getElementById('tq-position');
+  const findAllCheck = document.getElementById('tq-find-all');
+
+  findAllCheck.addEventListener('change', () => {
+    tqState.findAll = findAllCheck.checked;
+  });
 
   // Populate root note options
   NOTE_NAMES.forEach((name, i) => {
