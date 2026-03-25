@@ -576,12 +576,6 @@ body {
   margin-bottom: 4px;
 }
 
-#tq-find-all-count {
-  font-size: 18px;
-  color: #8899bb;
-  margin-bottom: 8px;
-  font-variant-numeric: tabular-nums;
-}
 
 #tq-fretboard {
   width: 100%;

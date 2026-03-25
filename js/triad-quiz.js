@@ -333,7 +333,7 @@ function tqUpdateFindAllCount() {
   if (!el) return;
   if (tqState.findAll && tqState.active) {
     const found = tqState.totalDots - tqState.remainingDots;
-    el.textContent = `${found} / ${tqState.totalDots}`;
+    document.getElementById('tq-find-all-value').textContent = `${found} / ${tqState.totalDots}`;
     el.style.display = '';
   } else {
     el.style.display = 'none';

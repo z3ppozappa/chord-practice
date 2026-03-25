@@ -153,11 +153,14 @@
 
       <div id="tq-game">
         <div id="tq-prompt"></div>
-        <div id="tq-find-all-count" style="display:none"></div>
         <div id="tq-fretboard"></div>
         <div id="tq-feedback"></div>
 
         <div id="tq-stats">
+          <div class="stat" id="tq-find-all-count" style="display:none">
+            <span class="stat-label">Found</span>
+            <span class="stat-value" id="tq-find-all-value">0 / 0</span>
+          </div>
           <div class="stat">
             <span class="stat-label">Strikes</span>
             <span class="stat-value" id="tq-strikes">
@@ -177,7 +180,7 @@
         </div>
       </div>
     </div>
-    <div id="version-tag">v33</div>
+    <div id="version-tag">v34</div>
   </div>
 
   <script src="js/scales.js"></script>
