@@ -162,7 +162,7 @@ function tqRender() {
   const numActiveStrings = TQ_STRINGS.length; // 4 (e, B, G, D)
   const totalStrings = 6; // show all 6 strings visually
 
-  const pad = { top: 60, bottom: 58, left: 52, right: 26 };
+  const pad = { top: 65, bottom: 58, left: 52, right: 26 };
   const stringSpacing = 52;
   const fretSpacing = 78;
   const width = pad.left + numFrets * fretSpacing + pad.right;
@@ -250,7 +250,7 @@ function tqRender() {
       'text-anchor': 'middle',
       'pointer-events': 'none'
     };
-    const above = createSVGElement('text', { x, y: pad.top - 14, ...attrs });
+    const above = createSVGElement('text', { x, y: pad.top - 30, ...attrs });
     above.textContent = fretNum;
     svg.appendChild(above);
     const below = createSVGElement('text', { x, y: pad.top + (totalStrings - 1) * stringSpacing + 45, ...attrs });
