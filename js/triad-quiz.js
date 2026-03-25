@@ -157,13 +157,14 @@ function tqRender() {
   const fretMin = tqState.fretMin;
   const fretMax = tqState.fretMax;
   const numFrets = fretMax - fretMin;
-  const numStrings = TQ_STRINGS.length; // 4
+  const numActiveStrings = TQ_STRINGS.length; // 4 (e, B, G, D)
+  const totalStrings = 6; // show all 6 strings visually
 
   const pad = { top: 40, bottom: 58, left: 52, right: 26 };
   const stringSpacing = 52;
   const fretSpacing = 78;
   const width = pad.left + numFrets * fretSpacing + pad.right;
-  const height = pad.top + (numStrings - 1) * stringSpacing + pad.bottom;
+  const height = pad.top + (totalStrings - 1) * stringSpacing + pad.bottom;
 
   const svg = createSVGElement('svg', {
     class: 'tq-fretboard-svg',
@@ -174,7 +175,7 @@ function tqRender() {
   // Fret markers (dots at 3,5,7,9,12,15,17,19,21,24)
   const singleMarkers = [3, 5, 7, 9, 15, 17, 19, 21];
   const doubleMarkers = [12, 24];
-  const midY = pad.top + (numStrings - 1) * stringSpacing / 2;
+  const midY = pad.top + (totalStrings - 1) * stringSpacing / 2;
 
   for (let i = 0; i < numFrets; i++) {
     const fretNum = fretMin + i + 1;
@@ -202,33 +203,34 @@ function tqRender() {
     const isNut = fretNum === 0;
     svg.appendChild(createSVGElement('line', {
       x1: x, y1: pad.top,
-      x2: x, y2: pad.top + (numStrings - 1) * stringSpacing,
+      x2: x, y2: pad.top + (totalStrings - 1) * stringSpacing,
       stroke: isNut ? '#ccc' : '#444',
       'stroke-width': isNut ? 5 : 1.5
     }));
   }
 
-  // Strings
-  for (let si = 0; si < numStrings; si++) {
+  // Strings (all 6 visible, top 4 active with labels)
+  for (let si = 0; si < totalStrings; si++) {
     const y = pad.top + si * stringSpacing;
-    const globalStringIdx = TQ_STRINGS[si];
+    const isActive = si < numActiveStrings;
+    const globalStringIdx = si; // 0=e, 1=B, 2=G, 3=D, 4=A, 5=E
     const thickness = 0.8 + (5 - globalStringIdx) * 0.25;
     svg.appendChild(createSVGElement('line', {
       x1: pad.left, y1: y,
       x2: pad.left + numFrets * fretSpacing, y2: y,
-      stroke: '#888',
+      stroke: isActive ? '#888' : '#444',
       'stroke-width': thickness
     }));
 
     // String label
     const label = createSVGElement('text', {
       x: pad.left - 20, y: y + 5,
-      fill: '#777',
+      fill: isActive ? '#777' : '#333',
       'font-size': '13',
       'font-family': 'system-ui, sans-serif',
       'text-anchor': 'middle'
     });
-    label.textContent = TQ_STRING_LABELS[si];
+    label.textContent = STRING_LABELS[globalStringIdx];
     svg.appendChild(label);
   }
 
@@ -239,7 +241,7 @@ function tqRender() {
     const x = pad.left + (i + 0.5) * fretSpacing;
     const isMarker = markerFrets.includes(fretNum);
     const label = createSVGElement('text', {
-      x, y: pad.top + (numStrings - 1) * stringSpacing + 45,
+      x, y: pad.top + (totalStrings - 1) * stringSpacing + 45,
       fill: isMarker ? '#99a' : '#3a3a4a',
       'font-size': isMarker ? '13' : '10',
       'font-weight': isMarker ? '600' : '400',
@@ -251,8 +253,8 @@ function tqRender() {
     svg.appendChild(label);
   }
 
-  // Note dots — one at every fret/string intersection
-  for (let si = 0; si < numStrings; si++) {
+  // Note dots — one at every fret/string intersection (top 4 strings only)
+  for (let si = 0; si < numActiveStrings; si++) {
     const globalStringIdx = TQ_STRINGS[si];
     const y = pad.top + si * stringSpacing;
 
