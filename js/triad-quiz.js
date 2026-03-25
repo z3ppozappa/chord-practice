@@ -239,7 +239,7 @@ function tqRender() {
     const x = pad.left + (i + 0.5) * fretSpacing;
     const isMarker = markerFrets.includes(fretNum);
     const label = createSVGElement('text', {
-      x, y: pad.top + (numStrings - 1) * stringSpacing + 28,
+      x, y: pad.top + (numStrings - 1) * stringSpacing + 45,
       fill: isMarker ? '#99a' : '#3a3a4a',
       'font-size': isMarker ? '13' : '10',
       'font-weight': isMarker ? '600' : '400',
