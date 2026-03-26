@@ -128,6 +128,7 @@ function initSettingsUI() {
   const showChord = document.getElementById('show-chord');
   if (state.showChordName) showChord.classList.add('active');
   showChord.addEventListener('click', () => {
+    showChord.blur();
     state.showChordName = !state.showChordName;
     showChord.classList.toggle('active', state.showChordName);
     saveSettings();
@@ -136,21 +137,10 @@ function initSettingsUI() {
 
   const hardModeEl = document.getElementById('hard-mode');
   if (state.hardMode) hardModeEl.classList.add('active');
-  if (state.hardMode) {
-    state.showChordName = true;
-    showChord.classList.add('active');
-    showChord.disabled = true;
-  }
   hardModeEl.addEventListener('click', () => {
+    hardModeEl.blur();
     state.hardMode = !state.hardMode;
     hardModeEl.classList.toggle('active', state.hardMode);
-    if (state.hardMode) {
-      state.showChordName = true;
-      showChord.classList.add('active');
-      showChord.disabled = true;
-    } else {
-      showChord.disabled = false;
-    }
     saveSettings();
     newRound();
   });
