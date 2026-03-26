@@ -279,46 +279,6 @@ body {
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* Streak bar */
-#streak-display {
-  text-align: center;
-  margin-bottom: 10px;
-  transition: transform 0.15s ease;
-}
-
-#streak-display.streak-pulse {
-  transform: scale(1.02);
-}
-
-.streak-bar {
-  width: 200px;
-  height: 4px;
-  background: #1a1a2e;
-  border-radius: 2px;
-  margin: 0 auto;
-  overflow: hidden;
-}
-
-.streak-bar-fill {
-  height: 100%;
-  width: 0;
-  border-radius: 2px;
-  background: #4a5a8a;
-  transition: width 0.3s ease, background 0.3s ease;
-}
-
-.streak-bar-fill.bar-lvl1 {
-  background: #48bb78;
-}
-
-.streak-bar-fill.bar-lvl2 {
-  background: #ed8936;
-}
-
-.streak-bar-fill.bar-lvl3 {
-  background: linear-gradient(90deg, #e53e3e, #dd6b20);
-}
-
 /* Best time display */
 #best-time-display {
   text-align: center;

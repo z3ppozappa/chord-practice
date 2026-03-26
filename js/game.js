@@ -326,7 +326,7 @@ function handleNoteClick(idx, note, group) {
     state.strikes++;
     flashWrongAtPosition(group);
     updateScoreDisplay();
-    updateStreakDisplay();
+
     updateStrikesDisplay();
     if (state.strikes >= 3) strikeOut();
     return;
@@ -341,7 +341,7 @@ function handleNoteClick(idx, note, group) {
     markDotCorrect(dot, state.showScaleDegrees && !state.hardMode);
     updateProgress();
     updateScoreDisplay();
-    updateStreakDisplay();
+
 
     if (state.foundIndices.size === state.chordToneIndices.length) {
       completeRound();
@@ -352,7 +352,7 @@ function handleNoteClick(idx, note, group) {
     state.strikes++;
     flashDotWrong(dot, state.hardMode);
     updateScoreDisplay();
-    updateStreakDisplay();
+
     updateStrikesDisplay();
 
     if (state.strikes >= 3) {
@@ -482,31 +482,6 @@ function completeRound() {
   nextBtn.focus();
 }
 
-function updateStreakDisplay() {
-  // Streak bar: fills toward next multiple of 5
-  const container = document.getElementById('streak-display');
-  if (!container) return;
-
-  const streak = state.streak;
-  const barEl = container.querySelector('.streak-bar-fill');
-  const progressInFive = streak % 5;
-  const pct = (progressInFive / 5) * 100;
-  barEl.style.width = (streak > 0 && progressInFive === 0) ? '100%' : pct + '%';
-
-  // Color intensifies with level
-  const level = Math.floor(streak / 5);
-  if (level >= 3) barEl.className = 'streak-bar-fill bar-lvl3';
-  else if (level >= 2) barEl.className = 'streak-bar-fill bar-lvl2';
-  else if (level >= 1) barEl.className = 'streak-bar-fill bar-lvl1';
-  else barEl.className = 'streak-bar-fill';
-
-  if (streak > 0) {
-    container.classList.add('streak-pulse');
-    setTimeout(() => container.classList.remove('streak-pulse'), 300);
-  }
-
-  updateBadges();
-}
 
 function updateBadges() {
   const container = document.getElementById('badges');
