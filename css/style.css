@@ -87,6 +87,10 @@ body {
   border-color: #5566aa;
 }
 
+.settings-toggle:focus {
+  outline: none;
+}
+
 .settings-toggle.active {
   background: #2a2a50;
   color: #c0c0d8;
