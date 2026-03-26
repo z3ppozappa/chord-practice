@@ -34,7 +34,17 @@ function initTabSwitching() {
         el.classList.toggle('hidden', key !== view);
       });
 
+      // Stop both game timers when switching tabs
       tqStop();
+      if (state.timerInterval) {
+        clearInterval(state.timerInterval);
+        state.timerInterval = null;
+      }
+
+      if (view === 'fretboard') {
+        // Reset the current round when returning to Scale Finder
+        newRound();
+      }
       if (view === 'triad-quiz') tqStart();
       if (view === 'dashboard') renderDashboard();
     });

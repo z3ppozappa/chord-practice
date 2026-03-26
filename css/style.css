@@ -624,6 +624,16 @@ body {
   color: #c0c0d8;
 }
 
+.dash-btn-danger {
+  border-color: #553333;
+  color: #aa6666;
+}
+
+.dash-btn-danger:hover {
+  border-color: #aa4444;
+  color: #ff6666;
+}
+
 .dash-import-success { color: #48bb78; font-size: 12px; }
 .dash-import-error { color: #f56565; font-size: 12px; }
 
