@@ -149,19 +149,6 @@ function initSettingsUI() {
     newRound();
   });
 
-  const parentKey = document.getElementById('parent-key-degrees');
-  parentKey.checked = state.parentKeyDegrees;
-  parentKey.addEventListener('change', () => {
-    state.parentKeyDegrees = parentKey.checked;
-    // Auto-enable scale degrees when parent key is turned on
-    if (parentKey.checked && !state.showScaleDegrees) {
-      state.showScaleDegrees = true;
-      showDegrees.checked = true;
-    }
-    saveSettings();
-    newRound();
-  });
-
   const keepProg = document.getElementById('keep-progression');
   keepProg.checked = state.keepProgression;
   keepProg.addEventListener('change', () => {

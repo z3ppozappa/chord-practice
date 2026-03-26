@@ -17,7 +17,6 @@ const state = {
   showModeName: true,
   showChordName: false,
   showScaleDegrees: true,    // show scale degree labels on dots
-  parentKeyDegrees: false,   // use parent key degrees instead of modal
   keepProgression: false,    // keep same key/mode/root across rounds
   hardMode: false,           // hide scale dots, tap blind
 
@@ -193,11 +192,9 @@ function newRound() {
 
   // Set scale degree text on dots
   if (state.showScaleDegrees) {
-    const useParent = state.parentKeyDegrees;
     state.dots.forEach(dot => {
       if (dot.note.chordTone) {
-        const deg = useParent ? dot.note.parentDegree : dot.note.modalDegree;
-        dot.labelDegree.textContent = deg;
+        dot.labelDegree.textContent = dot.note.modalDegree;
       }
     });
   }
@@ -269,18 +266,6 @@ function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
     }).join(' ');
   }
 
-  // Parent key info
-  const parentEl = document.getElementById('parent-key-info');
-  if (parentEl) {
-    if (state.parentKeyDegrees) {
-      const parentRoot = getParentKeyRootName(rootFret, scaleKey, keyCenterMode);
-      const parentLabel = getParentKeyLabel(scaleKey);
-      parentEl.textContent = `Parent: ${parentRoot} ${parentLabel}`;
-      parentEl.classList.remove('hidden');
-    } else {
-      parentEl.classList.add('hidden');
-    }
-  }
 }
 
 function updateProgress() {
@@ -550,7 +535,6 @@ function loadSettings() {
       state.showModeName = saved.showModeName !== undefined ? saved.showModeName : true;
       state.showChordName = saved.showChordName !== undefined ? saved.showChordName : false;
       state.showScaleDegrees = saved.showScaleDegrees !== undefined ? saved.showScaleDegrees : true;
-      state.parentKeyDegrees = saved.parentKeyDegrees !== undefined ? saved.parentKeyDegrees : false;
       state.keepProgression = saved.keepProgression !== undefined ? saved.keepProgression : false;
       state.hardMode = saved.hardMode !== undefined ? saved.hardMode : false;
     }
@@ -568,7 +552,6 @@ function saveSettings() {
     showModeName: state.showModeName,
     showChordName: state.showChordName,
     showScaleDegrees: state.showScaleDegrees,
-    parentKeyDegrees: state.parentKeyDegrees,
     keepProgression: state.keepProgression,
     hardMode: state.hardMode
   }));
