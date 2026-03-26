@@ -596,3 +596,149 @@ body {
   cursor: default;
   user-select: none;
 }
+
+/* Dashboard */
+#dashboard {
+  padding: 4px 0;
+}
+
+.dash-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dash-btn {
+  background: #1e1e35;
+  color: #8088aa;
+  border: 1px solid #333355;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dash-btn:hover {
+  border-color: #5566aa;
+  color: #c0c0d8;
+}
+
+.dash-import-success { color: #48bb78; font-size: 12px; }
+.dash-import-error { color: #f56565; font-size: 12px; }
+
+.dash-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #c0c0e0;
+  margin: 24px 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #252540;
+}
+
+.dash-section-title:first-of-type {
+  margin-top: 0;
+}
+
+.dash-group-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: #8088aa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 16px 0 8px;
+}
+
+.dash-summary-row {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+
+.dash-stat {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.dash-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #d0d0ee;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-stat-label {
+  font-size: 11px;
+  color: #8088aa;
+  text-transform: uppercase;
+}
+
+.dash-empty {
+  color: #666688;
+  font-size: 14px;
+  padding: 12px 0;
+}
+
+.dash-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.dash-bar-label {
+  flex: 0 0 140px;
+  font-size: 13px;
+  color: #b0b0cc;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dash-bar-track {
+  flex: 1;
+  height: 14px;
+  background: #1a1a2e;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dash-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.bar-green { background: #48bb78; }
+.bar-yellow { background: #d69e2e; }
+.bar-red { background: #e53e3e; }
+
+.dash-bar-stats {
+  flex: 0 0 110px;
+  font-size: 12px;
+  color: #9090aa;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash-bar-count {
+  color: #666688;
+}
+
+@media (max-width: 500px) {
+  .dash-bar-label {
+    flex: 0 0 90px;
+    font-size: 11px;
+  }
+  .dash-bar-stats {
+    flex: 0 0 80px;
+    font-size: 11px;
+  }
+  .dash-summary-row {
+    gap: 14px;
+  }
+  .dash-stat-value {
+    font-size: 16px;
+  }
+}

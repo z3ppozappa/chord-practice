@@ -18,8 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function initTabSwitching() {
   const tabs = document.querySelectorAll('#tab-bar .tab');
-  const fretboardView = document.getElementById('fretboard-view');
-  const triadQuizView = document.getElementById('triad-quiz-view');
+  const views = {
+    fretboard: document.getElementById('fretboard-view'),
+    'triad-quiz': document.getElementById('triad-quiz-view'),
+    dashboard: document.getElementById('dashboard-view')
+  };
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -27,15 +30,13 @@ function initTabSwitching() {
       tab.classList.add('active');
 
       const view = tab.dataset.view;
-      if (view === 'fretboard') {
-        fretboardView.classList.remove('hidden');
-        triadQuizView.classList.add('hidden');
-        tqStop();
-      } else {
-        fretboardView.classList.add('hidden');
-        triadQuizView.classList.remove('hidden');
-        tqStart();
-      }
+      Object.entries(views).forEach(([key, el]) => {
+        el.classList.toggle('hidden', key !== view);
+      });
+
+      tqStop();
+      if (view === 'triad-quiz') tqStart();
+      if (view === 'dashboard') renderDashboard();
     });
   });
 }

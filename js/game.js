@@ -458,6 +458,21 @@ function completeRound() {
   updateBatchDots();
   updateBadges();
 
+  // Log to history
+  historyAdd({
+    game: 'scale',
+    ts: Date.now(),
+    time: state.lastRoundTime,
+    perfect: state.roundPerfect,
+    strikes: state.strikes,
+    scaleType: state.currentScale,
+    keyCenter: state.currentMode,
+    shape: state.currentShapeMode,
+    chordQuality: state.currentChordInfo.quality,
+    chordNumeral: state.currentChordInfo.romanNumeral,
+    hardMode: state.hardMode
+  });
+
   const nextBtn = document.getElementById('next-btn');
   nextBtn.disabled = false;
   nextBtn.focus();

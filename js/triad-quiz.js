@@ -466,6 +466,20 @@ function tqCompleteRound() {
   document.getElementById('tq-streak').textContent = tqState.streak;
   document.getElementById('tq-timer').textContent = tqFormatTime(elapsed);
 
+  // Log to history
+  const chord = tqState.currentChord;
+  historyAdd({
+    game: 'triad',
+    ts: Date.now(),
+    time: elapsed,
+    perfect: tqState.roundPerfect,
+    strikes: tqState.strikes,
+    tqChordQuality: chord.quality,
+    tqChordRoot: chord.root,
+    tqFretRegion: `${tqState.fretMin}-${tqState.fretMax}`,
+    tqFindAll: tqState.findAll
+  });
+
   // Auto-advance after short delay
   setTimeout(() => {
     if (tqState.active) tqNewRound();
