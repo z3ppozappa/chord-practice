@@ -229,7 +229,7 @@ function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
   const findEl = document.getElementById('find-prompt');
   if (state.chordToneIndices.length === 0) {
     findEl.textContent = 'No chord tones on these strings';
-  } else if (state.showChordName || state.hardMode) {
+  } else if (state.showChordName) {
     // Show triad notes in R-3-5 order
     const modeIntervals = getModeIntervals(scaleKey, keyCenterMode);
     const triadNotes = chordInfo.chordDegreeIndices.map(di =>
