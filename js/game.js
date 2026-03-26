@@ -297,11 +297,11 @@ function updateBatchDots() {
   if (!container) return;
 
   container.classList.remove('batch-complete');
-  const batchPos = (state.round - 1) % 10; // 0-9 position in current batch
+  const batchPos = (state.round - 1) % 5; // 0-4 position in current batch
   const completedInBatch = batchPos; // rounds completed before current
 
   container.innerHTML = '';
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     const dot = document.createElement('span');
     dot.className = 'batch-dot';
     if (i < completedInBatch) dot.classList.add('filled');
@@ -448,19 +448,18 @@ function completeRound() {
 
   // Update batch dots — mark current as filled and check for batch complete
   updateBatchDots();
-  const batchPos = (state.round) % 10; // after completing, round is 1-indexed
   const container = document.getElementById('batch-dots');
   if (container) {
     // Fill all dots up to and including the current round in this batch
     const dots = container.querySelectorAll('.batch-dot');
-    const completedInBatch = ((state.round - 1) % 10) + 1;
+    const completedInBatch = ((state.round - 1) % 5) + 1;
     dots.forEach((dot, i) => {
       dot.classList.remove('current');
       if (i < completedInBatch) dot.classList.add('filled');
     });
 
-    // Flash green when batch of 10 is complete
-    if (completedInBatch === 10) {
+    // Flash green when batch of 5 is complete
+    if (completedInBatch === 5) {
       container.classList.add('batch-complete');
     }
   }
@@ -473,18 +472,18 @@ function completeRound() {
 }
 
 function updateStreakDisplay() {
-  // Streak bar: fills toward next multiple of 10
+  // Streak bar: fills toward next multiple of 5
   const container = document.getElementById('streak-display');
   if (!container) return;
 
   const streak = state.streak;
   const barEl = container.querySelector('.streak-bar-fill');
-  const progressInTen = streak % 10;
-  const pct = (progressInTen / 10) * 100;
-  barEl.style.width = (streak > 0 && progressInTen === 0) ? '100%' : pct + '%';
+  const progressInFive = streak % 5;
+  const pct = (progressInFive / 5) * 100;
+  barEl.style.width = (streak > 0 && progressInFive === 0) ? '100%' : pct + '%';
 
   // Color intensifies with level
-  const level = Math.floor(streak / 10);
+  const level = Math.floor(streak / 5);
   if (level >= 3) barEl.className = 'streak-bar-fill bar-lvl3';
   else if (level >= 2) barEl.className = 'streak-bar-fill bar-lvl2';
   else if (level >= 1) barEl.className = 'streak-bar-fill bar-lvl1';
@@ -504,21 +503,21 @@ function updateBadges() {
 
   container.innerHTML = '';
 
-  // Streak badges: one per 10 perfect rounds
-  const streakLevel = Math.floor(state.bestStreak / 10);
+  // Streak badges: one per 5 perfect rounds
+  const streakLevel = Math.floor(state.bestStreak / 5);
   if (streakLevel > 0) {
     const badge = document.createElement('span');
     badge.className = 'badge badge-streak';
-    badge.textContent = `${streakLevel}0 streak`;
+    badge.textContent = `${streakLevel * 5} streak`;
     container.appendChild(badge);
   }
 
-  // Speed badges: count of rounds completed under 10s
-  const fastCount = state.roundTimes.filter(t => t < 10000).length;
+  // Speed badges: count of rounds completed under 7s
+  const fastCount = state.roundTimes.filter(t => t < 7000).length;
   if (fastCount > 0) {
     const badge = document.createElement('span');
     badge.className = 'badge badge-speed';
-    badge.textContent = `${fastCount} under 10s`;
+    badge.textContent = `${fastCount} under 7s`;
     container.appendChild(badge);
   }
 }
