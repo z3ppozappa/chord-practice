@@ -143,7 +143,7 @@ function initSettingsUI() {
     state.showChordName = !state.showChordName;
     showChord.classList.toggle('active', state.showChordName);
     saveSettings();
-    newRound();
+    reRenderRound();
   });
 
   const hardModeEl = document.getElementById('hard-mode');
@@ -153,7 +153,7 @@ function initSettingsUI() {
     state.hardMode = !state.hardMode;
     hardModeEl.classList.toggle('active', state.hardMode);
     saveSettings();
-    newRound();
+    reRenderRound();
   });
 
   // Next button

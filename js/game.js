@@ -173,6 +173,13 @@ function newRound() {
     }
   });
 
+  // Render and start timer
+  reRenderRound();
+  startTimers();
+}
+
+// Re-render the current round without picking new notes (used for visual-only toggles)
+function reRenderRound() {
   // Render fretboard
   state.dots = renderFretboard('fretboard-container', state.pattern, state.activeStrings, handleNoteClick, state.showScaleDegrees && !state.hardMode, state.hardMode);
 
@@ -185,21 +192,24 @@ function newRound() {
     });
   }
 
+  // Re-mark already found dots
+  state.foundIndices.forEach(idx => {
+    const dot = state.dots.find(d => d.index === idx);
+    if (dot) markDotCorrect(dot, state.showScaleDegrees && !state.hardMode);
+  });
+
   // Update prompt
-  updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret);
+  updatePrompt(state.currentScale, state.currentMode, state.currentShapeMode, state.currentRootFret);
   updateProgress();
   updateScoreDisplay();
   updateBatchDots();
-
-  // Start timer
-  startTimers();
 
   // Update strikes display
   updateStrikesDisplay();
 
   // Disable next button
   const nextBtn = document.getElementById('next-btn');
-  nextBtn.disabled = true;
+  nextBtn.disabled = state.roundComplete ? false : true;
 }
 
 function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
