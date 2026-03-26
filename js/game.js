@@ -10,6 +10,7 @@ const state = {
   // Settings
   scaleKey: 'major',
   modeIndex: 0,              // 0 = Ionian for major (default)
+  rootNote: null,            // null = random, 0-11 = specific root note (C=0)
   positionOffset: 0,         // 0 = root (same as key center), -1 = random, 1-6 = offset from key center
   chordDegree: null,         // null = random, 0-6 = specific chord degree
   activeStrings: [true, true, true, true, true, true],
@@ -118,7 +119,20 @@ function pickRound() {
 
   // Pick root fret for the key center
   const range = getValidFretRange(scaleKey, keyCenterMode);
-  const rootFret = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+  let rootFret;
+  if (state.rootNote !== null) {
+    // Filter valid frets to those matching the selected root note
+    // Low E open = semitone 4 (E), so fret N = (4 + N) % 12
+    const validFrets = [];
+    for (let f = range.min; f <= range.max; f++) {
+      if ((4 + f) % 12 === state.rootNote) validFrets.push(f);
+    }
+    rootFret = validFrets.length > 0
+      ? validFrets[Math.floor(Math.random() * validFrets.length)]
+      : Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+  } else {
+    rootFret = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+  }
 
   // Compute shape root fret
   const shapeRootFret = getShapeRootFret(rootFret, scaleKey, keyCenterMode, shapeMode);
@@ -522,6 +536,7 @@ function loadSettings() {
     if (saved) {
       state.scaleKey = saved.scaleKey || 'major';
       state.modeIndex = saved.modeIndex !== undefined ? saved.modeIndex : getDefaultModeIndex(state.scaleKey);
+      state.rootNote = saved.rootNote !== undefined ? saved.rootNote : null;
       state.positionOffset = saved.positionOffset !== undefined ? saved.positionOffset : 0;
       state.chordDegree = saved.chordDegree !== undefined ? saved.chordDegree : null;
       state.activeStrings = saved.activeStrings || [true, true, true, true, true, true];
@@ -539,6 +554,7 @@ function saveSettings() {
   localStorage.setItem('chordGameSettings', JSON.stringify({
     scaleKey: state.scaleKey,
     modeIndex: state.modeIndex,
+    rootNote: state.rootNote,
     positionOffset: state.positionOffset,
     chordDegree: state.chordDegree,
     activeStrings: state.activeStrings,

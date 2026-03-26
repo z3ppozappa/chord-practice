@@ -54,7 +54,22 @@ function initSettingsUI() {
     newRound();
   });
 
-  // Key center (mode) selector
+  // Key (root note) selector
+  const keySelect = document.getElementById('key-select');
+  NOTE_NAMES.forEach((name, i) => {
+    const el = document.createElement('option');
+    el.value = i;
+    el.textContent = NOTE_DISPLAY_NAMES[i].replace('\n', '/');
+    keySelect.appendChild(el);
+  });
+  keySelect.value = state.rootNote !== null ? state.rootNote : 'random';
+  keySelect.addEventListener('change', () => {
+    state.rootNote = keySelect.value === 'random' ? null : parseInt(keySelect.value);
+    saveSettings();
+    newRound();
+  });
+
+  // Mode selector
   updateModeOptions();
   document.getElementById('mode-select').addEventListener('change', () => {
     const val = document.getElementById('mode-select').value;
