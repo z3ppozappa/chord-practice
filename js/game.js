@@ -214,15 +214,15 @@ function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
   const modeEl = document.getElementById('mode-name');
   modeEl.textContent = keyCenterName;
 
-  // Shape/position info (show when shape differs from key center)
+  // Shape/position info
   const shapeEl = document.getElementById('shape-info');
   if (shapeEl) {
     if (shapeMode !== keyCenterMode) {
       shapeEl.textContent = `${shapeName} shape`;
-      shapeEl.classList.remove('hidden');
     } else {
-      shapeEl.classList.add('hidden');
+      shapeEl.textContent = 'root shape';
     }
+    shapeEl.classList.remove('hidden');
   }
 
   // Merged prompt: always show chord, optionally hide name
