@@ -217,17 +217,17 @@ function updatePositionOptions() {
   const posSelect = document.getElementById('position-select');
   posSelect.innerHTML = '';
 
-  // Root option (same as key center)
-  const rootOpt = document.createElement('option');
-  rootOpt.value = '0';
-  rootOpt.textContent = 'Root';
-  posSelect.appendChild(rootOpt);
-
   // Random option
   const randOpt = document.createElement('option');
   randOpt.value = '-1';
   randOpt.textContent = 'Random';
   posSelect.appendChild(randOpt);
+
+  // Root option (same as key center)
+  const rootOpt = document.createElement('option');
+  rootOpt.value = '0';
+  rootOpt.textContent = 'Root';
+  posSelect.appendChild(rootOpt);
 
   // Determine how many positions to show based on the effective scale
   const scaleKey = state.scaleKey;
