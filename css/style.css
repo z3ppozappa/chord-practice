@@ -33,14 +33,16 @@ body {
 
 .settings-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 8px 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 10px;
   margin-bottom: 10px;
 }
 
 .settings-grid label {
-  font-size: 13px;
-  color: #b0b0cc;
+  font-size: 11px;
+  color: #8088aa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   display: flex;
   flex-direction: column;
   gap: 3px;
@@ -50,31 +52,40 @@ body {
   background: #1e1e35;
   color: #c0c0d8;
   border: 1px solid #333355;
-  border-radius: 5px;
-  padding: 5px 8px;
+  border-radius: 6px;
+  padding: 6px 8px;
   font-size: 13px;
   cursor: pointer;
   width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23666688'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  padding-right: 24px;
 }
 
 .settings-grid select:focus {
-  outline: 1px solid #5566aa;
+  outline: none;
+  border-color: #5566aa;
 }
 
 .settings-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  justify-content: space-between;
   align-items: center;
+  padding-top: 8px;
+  border-top: 1px solid #1e1e35;
 }
 
 .settings-row label {
-  font-size: 13px;
-  color: #b0b0cc;
+  font-size: 12px;
+  color: #8898bb;
   display: flex;
   align-items: center;
   gap: 5px;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .settings-row input[type="checkbox"] {
@@ -455,8 +466,8 @@ body {
     padding: 10px 12px;
   }
 
-  .settings-row {
-    gap: 8px;
+  .settings-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   #find-prompt {
