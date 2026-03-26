@@ -537,6 +537,10 @@ body {
   border: 1px solid #252540;
 }
 
+.tq-grid {
+  grid-template-columns: repeat(3, 1fr) !important;
+}
+
 #tq-game {
   text-align: center;
 }

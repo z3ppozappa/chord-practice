@@ -124,7 +124,7 @@
 
     <div id="triad-quiz-view" class="hidden">
       <header id="tq-settings">
-        <div class="settings-grid">
+        <div class="settings-grid tq-grid">
           <label>Mode
             <select id="tq-mode">
               <option value="random">Random</option>
@@ -146,9 +146,7 @@
               <option value="14-24">Frets 15+</option>
             </select>
           </label>
-        </div>
-        <div class="settings-row">
-          <label><input type="checkbox" id="tq-find-all"> Find all instances</label>
+          <button type="button" id="tq-find-all" class="settings-toggle active">Find All</button>
         </div>
       </header>
 
@@ -181,7 +179,7 @@
         </div>
       </div>
     </div>
-    <div id="version-tag">v5.01</div>
+    <div id="version-tag">v5.1</div>
   </div>
 
   <script src="js/scales.js"></script>

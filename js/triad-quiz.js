@@ -37,7 +37,7 @@ const tqState = {
   bestRoundTime: null,
   timerInterval: null,
   active: false,
-  findAll: false,
+  findAll: true,
   remainingDots: 0,    // count of unfound dots in findAll mode
 
   fretMin: 0,
@@ -516,10 +516,12 @@ function initTriadQuizUI() {
   const rootSelect = document.getElementById('tq-root');
   const scaleSelect = document.getElementById('tq-scale');
   const posSelect = document.getElementById('tq-position');
-  const findAllCheck = document.getElementById('tq-find-all');
+  const findAllBtn = document.getElementById('tq-find-all');
 
-  findAllCheck.addEventListener('change', () => {
-    tqState.findAll = findAllCheck.checked;
+  findAllBtn.addEventListener('click', () => {
+    findAllBtn.blur();
+    tqState.findAll = !tqState.findAll;
+    findAllBtn.classList.toggle('active', tqState.findAll);
   });
 
   // Populate root note options
