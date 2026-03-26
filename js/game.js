@@ -16,7 +16,7 @@ const state = {
   activeStrings: [true, true, true, true, true, true],
   showModeName: true,
   showChordName: false,
-  showScaleDegrees: true,    // show scale degree labels on dots
+  showScaleDegrees: true,    // always show scale degree labels on dots
   keepProgression: false,    // keep same key/mode/root across rounds
   hardMode: false,           // hide scale dots, tap blind
 
@@ -32,6 +32,7 @@ const state = {
   chordToneIndices: [],
   foundIndices: new Set(),
   roundComplete: false,
+  lastRoundCompleted: false,
 
   // Scoring
   streak: 0,
@@ -151,7 +152,12 @@ function newRound() {
   state.foundIndices = new Set();
   state.strikes = 0;
   state.roundPerfect = true;
-  state.round++;
+
+  // Only increment round counter for actual new rounds, not settings refreshes
+  if (state.round === 0 || state.lastRoundCompleted) {
+    state.round++;
+  }
+  state.lastRoundCompleted = false;
 
   const { scaleKey, keyCenterMode, shapeMode, rootFret, shapeRootFret } = pickRound();
   state.currentScale = scaleKey;
@@ -429,6 +435,7 @@ function updateStrikesDisplay() {
 
 function completeRound() {
   state.roundComplete = true;
+  state.lastRoundCompleted = true;
   state.lastRoundTime = Date.now() - state.roundStartTime;
 
   if (state.roundPerfect) {
@@ -534,7 +541,7 @@ function loadSettings() {
       state.activeStrings = saved.activeStrings || [true, true, true, true, true, true];
       state.showModeName = saved.showModeName !== undefined ? saved.showModeName : true;
       state.showChordName = saved.showChordName !== undefined ? saved.showChordName : false;
-      state.showScaleDegrees = saved.showScaleDegrees !== undefined ? saved.showScaleDegrees : true;
+
       state.keepProgression = saved.keepProgression !== undefined ? saved.keepProgression : false;
       state.hardMode = saved.hardMode !== undefined ? saved.hardMode : false;
     }
@@ -551,7 +558,6 @@ function saveSettings() {
     activeStrings: state.activeStrings,
     showModeName: state.showModeName,
     showChordName: state.showChordName,
-    showScaleDegrees: state.showScaleDegrees,
     keepProgression: state.keepProgression,
     hardMode: state.hardMode
   }));

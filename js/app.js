@@ -141,14 +141,6 @@ function initSettingsUI() {
     newRound();
   });
 
-  const showDegrees = document.getElementById('show-degrees');
-  showDegrees.checked = state.showScaleDegrees;
-  showDegrees.addEventListener('change', () => {
-    state.showScaleDegrees = showDegrees.checked;
-    saveSettings();
-    newRound();
-  });
-
   const keepProg = document.getElementById('keep-progression');
   keepProg.checked = state.keepProgression;
   keepProg.addEventListener('change', () => {
