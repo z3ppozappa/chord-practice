@@ -523,12 +523,20 @@ function updateBadges() {
     container.appendChild(badge);
   }
 
-  // Speed badges: count of rounds completed under 7s
-  const fastCount = state.roundTimes.filter(t => t < 7000).length;
-  if (fastCount > 0) {
+  // Speed badges
+  const under10Count = state.roundTimes.filter(t => t < 10000).length;
+  if (under10Count > 0) {
     const badge = document.createElement('span');
     badge.className = 'badge badge-speed';
-    badge.textContent = `${fastCount} under 7s`;
+    badge.textContent = `${under10Count} under 10s`;
+    container.appendChild(badge);
+  }
+
+  const under7Count = state.roundTimes.filter(t => t < 7000).length;
+  if (under7Count > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-speed';
+    badge.textContent = `${under7Count} under 7s`;
     container.appendChild(badge);
   }
 }
