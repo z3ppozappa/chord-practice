@@ -121,20 +121,27 @@ function pickRound() {
   const range = getValidFretRange(scaleKey, keyCenterMode);
   let rootFret;
   if (state.rootNote !== null) {
-    // Filter valid frets to those matching the selected root note
+    // Find all frets in valid range where the note matches the selected root
     // Low E open = semitone 4 (E), so fret N = (4 + N) % 12
     const validFrets = [];
     for (let f = range.min; f <= range.max; f++) {
       if ((4 + f) % 12 === state.rootNote) validFrets.push(f);
     }
-    rootFret = validFrets.length > 0
-      ? validFrets[Math.floor(Math.random() * validFrets.length)]
-      : Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+    if (validFrets.length > 0) {
+      rootFret = validFrets[Math.floor(Math.random() * validFrets.length)];
+    } else {
+      // Widen search to full fretboard, then clamp via getShapeRootFret
+      const allFrets = [];
+      for (let f = 0; f <= 24; f++) {
+        if ((4 + f) % 12 === state.rootNote) allFrets.push(f);
+      }
+      rootFret = allFrets[Math.floor(Math.random() * allFrets.length)];
+    }
   } else {
     rootFret = Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
   }
 
-  // Compute shape root fret
+  // Compute shape root fret (adjusts position so the shape is playable)
   const shapeRootFret = getShapeRootFret(rootFret, scaleKey, keyCenterMode, shapeMode);
 
   return { scaleKey, keyCenterMode, shapeMode, rootFret, shapeRootFret };
