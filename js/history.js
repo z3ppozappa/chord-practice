@@ -72,7 +72,7 @@ function historyImport(file) {
 // Query helpers
 
 function historyFilter(game) {
-  return historyLoad().filter(e => e.game === game);
+  return historyLoad().filter(e => e.game === game && e.time <= 60000);
 }
 
 function historyGroupBy(entries, key) {
