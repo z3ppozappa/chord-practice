@@ -523,20 +523,20 @@ function updateBadges() {
     container.appendChild(badge);
   }
 
-  // Speed badges
-  const under10Count = state.roundTimes.filter(t => t < 10000).length;
-  if (under10Count > 0) {
-    const badge = document.createElement('span');
-    badge.className = 'badge badge-speed';
-    badge.textContent = `${under10Count} under 10s`;
-    container.appendChild(badge);
-  }
-
+  // Speed badges — exclusive buckets, under 7s first then 7-9s as "under 10s"
   const under7Count = state.roundTimes.filter(t => t < 7000).length;
   if (under7Count > 0) {
     const badge = document.createElement('span');
     badge.className = 'badge badge-speed';
     badge.textContent = `${under7Count} under 7s`;
+    container.appendChild(badge);
+  }
+
+  const under10Count = state.roundTimes.filter(t => t >= 7000 && t < 10000).length;
+  if (under10Count > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'badge badge-speed';
+    badge.textContent = `${under10Count} under 10s`;
     container.appendChild(badge);
   }
 }
