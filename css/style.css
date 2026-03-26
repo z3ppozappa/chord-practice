@@ -74,6 +74,7 @@ body {
   display: flex;
   align-items: center;
   gap: 5px;
+  white-space: nowrap;
 }
 
 .settings-row input[type="checkbox"] {
