@@ -45,7 +45,11 @@ const state = {
   lastRoundTime: null,
   bestRoundTime: null,
   roundTimes: [],        // history of completed round times
-  timerInterval: null
+  timerInterval: null,
+
+  // Session totals
+  perfectFastCount: 0,   // perfect rounds under 15s
+  totalCompleted: 0       // all completed rounds
 };
 
 function formatTime(ms) {
@@ -290,6 +294,8 @@ function updateProgress() {
 
 function updateScoreDisplay() {
   document.getElementById('streak').textContent = state.streak;
+  document.getElementById('perfect-fast-count').textContent = state.perfectFastCount;
+  document.getElementById('total-completed').textContent = state.totalCompleted;
 }
 
 function updateBatchDots() {
@@ -425,6 +431,11 @@ function completeRound() {
     state.streak = 0;
   }
   if (state.streak > state.bestStreak) state.bestStreak = state.streak;
+
+  state.totalCompleted++;
+  if (state.roundPerfect && state.lastRoundTime < 15000) {
+    state.perfectFastCount++;
+  }
 
   const isNewBest = state.bestRoundTime === null || state.lastRoundTime < state.bestRoundTime;
   if (isNewBest) state.bestRoundTime = state.lastRoundTime;
