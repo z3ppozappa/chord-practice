@@ -124,41 +124,29 @@ function initSettingsUI() {
     newRound();
   });
 
-  // Show/hide toggles
-  const showMode = document.getElementById('show-mode');
-  showMode.checked = state.showModeName;
-  showMode.addEventListener('change', () => {
-    state.showModeName = showMode.checked;
-    saveSettings();
-    document.getElementById('mode-name').classList.toggle('hidden', !state.showModeName);
-  });
-
+  // Toggle buttons
   const showChord = document.getElementById('show-chord');
-  showChord.checked = state.showChordName;
-  showChord.addEventListener('change', () => {
-    state.showChordName = showChord.checked;
+  if (state.showChordName) showChord.classList.add('active');
+  showChord.addEventListener('click', () => {
+    state.showChordName = !state.showChordName;
+    showChord.classList.toggle('active', state.showChordName);
     saveSettings();
     newRound();
   });
 
-  const keepProg = document.getElementById('keep-progression');
-  keepProg.checked = state.keepProgression;
-  keepProg.addEventListener('change', () => {
-    state.keepProgression = keepProg.checked;
-    saveSettings();
-  });
-
   const hardModeEl = document.getElementById('hard-mode');
-  hardModeEl.checked = state.hardMode;
+  if (state.hardMode) hardModeEl.classList.add('active');
   if (state.hardMode) {
-    showChord.checked = true;
+    state.showChordName = true;
+    showChord.classList.add('active');
     showChord.disabled = true;
   }
-  hardModeEl.addEventListener('change', () => {
-    state.hardMode = hardModeEl.checked;
+  hardModeEl.addEventListener('click', () => {
+    state.hardMode = !state.hardMode;
+    hardModeEl.classList.toggle('active', state.hardMode);
     if (state.hardMode) {
       state.showChordName = true;
-      showChord.checked = true;
+      showChord.classList.add('active');
       showChord.disabled = true;
     } else {
       showChord.disabled = false;

@@ -14,10 +14,8 @@ const state = {
   positionOffset: 0,         // 0 = root (same as key center), -1 = random, 1-6 = offset from key center
   chordDegree: null,         // null = random, 0-6 = specific chord degree
   activeStrings: [true, true, true, true, true, true],
-  showModeName: true,
   showChordName: false,
   showScaleDegrees: true,    // always show scale degree labels on dots
-  keepProgression: false,    // keep same key/mode/root across rounds
   hardMode: false,           // hide scale dots, tap blind
 
   // Current round
@@ -76,24 +74,6 @@ function updateTimerDisplay() {
 }
 
 function pickRound() {
-  // Reuse previous key/mode/root when keepProgression is enabled and we have prior state
-  if (state.keepProgression && state.currentScale !== null) {
-    const scaleKey = state.currentScale;
-    const keyCenterMode = state.currentMode;
-    const rootFret = state.currentRootFret;
-    const numModes = SCALE_DEFS[scaleKey].modes.length;
-
-    let shapeMode;
-    if (state.positionOffset === -1) {
-      shapeMode = Math.floor(Math.random() * numModes);
-    } else {
-      shapeMode = (keyCenterMode + state.positionOffset) % numModes;
-    }
-
-    const shapeRootFret = getShapeRootFret(rootFret, scaleKey, keyCenterMode, shapeMode);
-    return { scaleKey, keyCenterMode, shapeMode, rootFret, shapeRootFret };
-  }
-
   let scaleKey = state.scaleKey;
   let keyCenterMode = state.modeIndex;
 
@@ -233,7 +213,6 @@ function updatePrompt(scaleKey, keyCenterMode, shapeMode, rootFret) {
   // Key center mode name
   const modeEl = document.getElementById('mode-name');
   modeEl.textContent = keyCenterName;
-  modeEl.classList.toggle('hidden', !state.showModeName);
 
   // Shape/position info (show when shape differs from key center)
   const shapeEl = document.getElementById('shape-info');
@@ -315,16 +294,22 @@ function updateBatchDots() {
   if (!container) return;
 
   container.classList.remove('batch-complete');
-  const batchPos = (state.round - 1) % 5; // 0-4 position in current batch
-  const completedInBatch = batchPos; // rounds completed before current
+  const streakInBatch = state.streak % 5;
 
   container.innerHTML = '';
   for (let i = 0; i < 5; i++) {
     const dot = document.createElement('span');
     dot.className = 'batch-dot';
-    if (i < completedInBatch) dot.classList.add('filled');
-    if (i === completedInBatch) dot.classList.add('current');
+    if (i < streakInBatch) dot.classList.add('filled');
+    if (i === streakInBatch && state.streak > 0) dot.classList.add('current');
     container.appendChild(dot);
+  }
+
+  // Flash when a batch of 5 is complete
+  if (state.streak > 0 && streakInBatch === 0) {
+    // Just crossed a multiple of 5 — fill all and flash
+    container.querySelectorAll('.batch-dot').forEach(d => d.classList.add('filled'));
+    container.classList.add('batch-complete');
   }
 }
 
@@ -470,24 +455,7 @@ function completeRound() {
     }
   }
 
-  // Update batch dots — mark current as filled and check for batch complete
   updateBatchDots();
-  const container = document.getElementById('batch-dots');
-  if (container) {
-    // Fill all dots up to and including the current round in this batch
-    const dots = container.querySelectorAll('.batch-dot');
-    const completedInBatch = ((state.round - 1) % 5) + 1;
-    dots.forEach((dot, i) => {
-      dot.classList.remove('current');
-      if (i < completedInBatch) dot.classList.add('filled');
-    });
-
-    // Flash green when batch of 5 is complete
-    if (completedInBatch === 5) {
-      container.classList.add('batch-complete');
-    }
-  }
-
   updateBadges();
 
   const nextBtn = document.getElementById('next-btn');
@@ -539,10 +507,9 @@ function loadSettings() {
       state.positionOffset = saved.positionOffset !== undefined ? saved.positionOffset : 0;
       state.chordDegree = saved.chordDegree !== undefined ? saved.chordDegree : null;
       state.activeStrings = saved.activeStrings || [true, true, true, true, true, true];
-      state.showModeName = saved.showModeName !== undefined ? saved.showModeName : true;
+
       state.showChordName = saved.showChordName !== undefined ? saved.showChordName : false;
 
-      state.keepProgression = saved.keepProgression !== undefined ? saved.keepProgression : false;
       state.hardMode = saved.hardMode !== undefined ? saved.hardMode : false;
     }
   } catch (e) { /* ignore */ }
@@ -556,9 +523,9 @@ function saveSettings() {
     positionOffset: state.positionOffset,
     chordDegree: state.chordDegree,
     activeStrings: state.activeStrings,
-    showModeName: state.showModeName,
+
     showChordName: state.showChordName,
-    keepProgression: state.keepProgression,
+
     hardMode: state.hardMode
   }));
 }
