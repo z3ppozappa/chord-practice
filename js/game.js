@@ -11,7 +11,7 @@ const state = {
   scaleKey: 'major',
   modeIndex: 0,              // 0 = Ionian for major (default)
   rootNote: null,            // null = random, 0-11 = specific root note (C=0)
-  positionOffset: 0,         // 0 = root (same as key center), -1 = random, 1-6 = offset from key center
+  positionOffset: -1,        // -1 = random, 0 = root (same as key center), 1-6 = offset from key center
   chordDegree: null,         // null = random, 0-6 = specific chord degree
   activeStrings: [true, true, true, true, true, true],
   showChordName: false,
@@ -504,7 +504,7 @@ function loadSettings() {
       state.scaleKey = saved.scaleKey || 'major';
       state.modeIndex = saved.modeIndex !== undefined ? saved.modeIndex : getDefaultModeIndex(state.scaleKey);
       state.rootNote = saved.rootNote !== undefined ? saved.rootNote : null;
-      state.positionOffset = saved.positionOffset !== undefined ? saved.positionOffset : 0;
+      state.positionOffset = saved.positionOffset !== undefined ? saved.positionOffset : -1;
       state.chordDegree = saved.chordDegree !== undefined ? saved.chordDegree : null;
       state.activeStrings = saved.activeStrings || [true, true, true, true, true, true];
 

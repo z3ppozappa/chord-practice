@@ -258,8 +258,8 @@ function updatePositionOptions() {
   // Restore selection
   posSelect.value = state.positionOffset;
   if (posSelect.value !== String(state.positionOffset)) {
-    state.positionOffset = 0;
-    posSelect.value = '0';
+    state.positionOffset = -1;
+    posSelect.value = '-1';
   }
 }
 
