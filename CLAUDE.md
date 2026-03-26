@@ -1,3 +1,3 @@
 IMPORTANT: Always use branch claude/pwa-offline-support-eUijS for all development and pushes. Do NOT use claude/guitar-chord-tone-game-eUijS.
 
-IMPORTANT: Increment the version number in the `#version-tag` div in index.html with every commit. The version tag is in the format `vN` where N is an integer.
+IMPORTANT: Increment the version number in the `#version-tag` div in index.html with every commit. The version format is `vX.YZ` where X is the major version, Y is the feature number (incremented for each new feature), and Z is the bug fix number within that feature (incremented for bug fix commits). Example: v5.0 is the base, v5.1 is the first new feature, v5.11 is the first bug fix after that feature, v5.2 is the next feature, v5.21 is the first bug fix after that.
