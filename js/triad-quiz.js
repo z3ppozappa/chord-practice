@@ -260,7 +260,9 @@ function tqRender() {
   }
 
   // Note dots — one at every fret/string intersection (top 4 strings only)
-  let chordToneDotCount = 0;
+  // Collect chord tone positions by type for find-all selection
+  const chordTonesByType = { root: [], third: [], fifth: [] };
+
   for (let si = 0; si < numActiveStrings; si++) {
     const globalStringIdx = TQ_STRINGS[si];
     const y = pad.top + si * stringSpacing;
@@ -269,9 +271,6 @@ function tqRender() {
       const fretNum = fretMin + i + 1;
       const cx = pad.left + (i + 0.5) * fretSpacing;
       const noteIdx = tqNoteAt(globalStringIdx, fretNum);
-      if (noteIdx === chord.root || noteIdx === chord.thirdNote || noteIdx === chord.fifthNote) {
-        chordToneDotCount++;
-      }
       const displayName = tqNoteName(noteIdx);
 
       const group = createSVGElement('g', {
@@ -311,12 +310,43 @@ function tqRender() {
       group.addEventListener('click', () => tqHandleDotTap(noteIdx, group));
 
       svg.appendChild(group);
+
+      // Track chord tone positions
+      if (noteIdx === chord.root) chordTonesByType.root.push(group);
+      else if (noteIdx === chord.thirdNote) chordTonesByType.third.push(group);
+      else if (noteIdx === chord.fifthNote) chordTonesByType.fifth.push(group);
     }
   }
 
+  // In find-all mode, select up to 2 per tone type (max 6 targets)
+  const selectUpTo2 = (arr) => {
+    if (arr.length <= 2) return arr.slice();
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr.slice(0, 2);
+  };
+
+  let targetCount;
+  if (tqState.findAll) {
+    const targets = [
+      ...selectUpTo2(chordTonesByType.root),
+      ...selectUpTo2(chordTonesByType.third),
+      ...selectUpTo2(chordTonesByType.fifth)
+    ];
+    targets.forEach(g => g.setAttribute('data-target', 'true'));
+    targetCount = targets.length;
+  } else {
+    // Non-findAll: all chord tones are targets (but only one per note needed)
+    const all = [...chordTonesByType.root, ...chordTonesByType.third, ...chordTonesByType.fifth];
+    all.forEach(g => g.setAttribute('data-target', 'true'));
+    targetCount = all.length;
+  }
+
   container.appendChild(svg);
-  tqState.remainingDots = chordToneDotCount;
-  tqState.totalDots = chordToneDotCount;
+  tqState.remainingDots = targetCount;
+  tqState.totalDots = targetCount;
 
   // Feedback
   document.getElementById('tq-feedback').textContent = '';
@@ -359,14 +389,17 @@ function tqHandleDotTap(noteIndex, group) {
 
   if (isChordTone) {
     if (tqState.findAll) {
-      // Find-all mode: mark only the tapped dot
+      // Find-all mode: mark the tapped dot, only count if it's a target
+      const isTarget = group.getAttribute('data-target') === 'true';
       tqMarkDotCorrect(group);
-      tqState.remainingDots--;
-      tqUpdateFindAllCount();
+      if (isTarget) {
+        tqState.remainingDots--;
+        tqUpdateFindAllCount();
+      }
 
-      // Track per-note completion for non-findAll state checks
-      const noteStillNeeded = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIndex}"]:not(.correct)`);
-      if (noteStillNeeded.length === 0) {
+      // Track per-note completion
+      const targetsStillNeeded = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIndex}"][data-target="true"]:not(.correct)`);
+      if (targetsStillNeeded.length === 0) {
         if (noteIndex === chord.root) tqState.foundRoot = true;
         if (noteIndex === chord.thirdNote) tqState.foundThird = true;
         if (noteIndex === chord.fifthNote) tqState.foundFifth = true;
