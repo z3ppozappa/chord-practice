@@ -38,6 +38,39 @@ function historyExport() {
   URL.revokeObjectURL(url);
 }
 
+function historyExportCSV() {
+  const entries = historyLoad();
+  if (entries.length === 0) return;
+
+  // Collect all unique keys across entries
+  const allKeys = new Set();
+  entries.forEach(e => Object.keys(e).forEach(k => allKeys.add(k)));
+  const headers = Array.from(allKeys);
+
+  const escapeCSV = (val) => {
+    if (val === null || val === undefined) return '';
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  };
+
+  const rows = [headers.map(escapeCSV).join(',')];
+  entries.forEach(e => {
+    rows.push(headers.map(h => escapeCSV(e[h])).join(','));
+  });
+
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `chord-practice-${date}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function historyImport(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

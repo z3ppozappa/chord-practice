@@ -133,12 +133,14 @@ function renderBarChart(rows) {
 
 function initDashboardActions() {
   const exportBtn = document.getElementById('dash-export');
+  const exportCsvBtn = document.getElementById('dash-export-csv');
   const importBtn = document.getElementById('dash-import-btn');
   const clearBtn = document.getElementById('dash-clear');
   const importInput = document.getElementById('dash-import');
   const statusEl = document.getElementById('dash-import-status');
 
   exportBtn.onclick = () => historyExport();
+  exportCsvBtn.onclick = () => historyExportCSV();
 
   clearBtn.onclick = () => {
     if (confirm('Clear all practice history? This cannot be undone.')) {
