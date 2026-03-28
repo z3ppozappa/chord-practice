@@ -38,6 +38,8 @@ const tqState = {
   timerInterval: null,
   active: false,
   findAll: true,
+  hiddenMode: false,
+  gridMode: false,
   remainingDots: 0,    // count of unfound dots in findAll mode
 
   fretMin: 0,
@@ -152,6 +154,12 @@ function tqRender() {
   // Prompt
   const promptEl = document.getElementById('tq-prompt');
   promptEl.innerHTML = `<span class="tq-chord-name">${chord.name}</span>`;
+
+  // Grid mode: render note grid instead of fretboard
+  if (tqState.gridMode) {
+    tqRenderGrid();
+    return;
+  }
 
   // Fretboard
   const container = document.getElementById('tq-fretboard');
@@ -287,16 +295,19 @@ function tqRender() {
       group.appendChild(hitArea);
 
       // Visible circle
+      const hidden = tqState.hiddenMode;
       const circle = createSVGElement('circle', {
         cx, cy: y, r: 22, class: 'tq-dot-circle',
-        fill: '#1e1e35', stroke: '#333355', 'stroke-width': '1.5'
+        fill: hidden ? 'transparent' : '#1e1e35',
+        stroke: hidden ? 'transparent' : '#333355',
+        'stroke-width': '1.5'
       });
       group.appendChild(circle);
 
       // Note name label
       const text = createSVGElement('text', {
         x: cx, y: y + 5,
-        fill: '#c0c0d8',
+        fill: hidden ? 'transparent' : '#c0c0d8',
         'font-size': '14',
         'font-weight': '600',
         'font-family': 'system-ui, sans-serif',
@@ -358,10 +369,106 @@ function tqRender() {
   tqUpdateFindAllCount();
 }
 
+// Grid mode: 3x4 grid of all 12 chromatic notes (A through G#)
+const TQ_GRID_NOTES = [
+  { name: 'A',  idx: 9 },  { name: 'A♯', idx: 10 }, { name: 'B',  idx: 11 }, { name: 'C',  idx: 0 },
+  { name: 'C♯', idx: 1 },  { name: 'D',  idx: 2 },  { name: 'D♯', idx: 3 },  { name: 'E',  idx: 4 },
+  { name: 'F',  idx: 5 },  { name: 'F♯', idx: 6 },  { name: 'G',  idx: 7 },  { name: 'G♯', idx: 8 }
+];
+
+function tqRenderGrid() {
+  const chord = tqState.currentChord;
+  const container = document.getElementById('tq-fretboard');
+  container.innerHTML = '';
+
+  const grid = document.createElement('div');
+  grid.className = 'tq-note-grid';
+
+  tqState.foundRoot = false;
+  tqState.foundThird = false;
+  tqState.foundFifth = false;
+  tqState.remainingDots = 3;
+  tqState.totalDots = 3;
+
+  TQ_GRID_NOTES.forEach(note => {
+    const cell = document.createElement('div');
+    cell.className = 'tq-grid-cell';
+    cell.textContent = note.name;
+    cell.dataset.note = note.idx;
+    cell.addEventListener('click', () => tqHandleGridTap(note.idx, cell));
+    grid.appendChild(cell);
+  });
+
+  container.appendChild(grid);
+
+  // Feedback
+  document.getElementById('tq-feedback').textContent = '';
+  document.getElementById('tq-streak').textContent = tqState.streak;
+  tqUpdateFindAllCount();
+}
+
+function tqHandleGridTap(noteIndex, cell) {
+  if (cell.classList.contains('correct')) return;
+
+  const chord = tqState.currentChord;
+  const isChordTone = noteIndex === chord.root || noteIndex === chord.thirdNote || noteIndex === chord.fifthNote;
+
+  if (isChordTone) {
+    cell.classList.add('correct');
+
+    if (noteIndex === chord.root) tqState.foundRoot = true;
+    if (noteIndex === chord.thirdNote) tqState.foundThird = true;
+    if (noteIndex === chord.fifthNote) tqState.foundFifth = true;
+
+    tqState.remainingDots--;
+    tqUpdateFindAllCount();
+
+    if (tqState.foundRoot && tqState.foundThird && tqState.foundFifth) {
+      tqCompleteRound();
+    }
+  } else {
+    tqState.roundPerfect = false;
+    tqState.strikes++;
+
+    cell.classList.add('wrong');
+    setTimeout(() => cell.classList.remove('wrong'), 400);
+
+    tqUpdateStrikesDisplay();
+
+    if (tqState.strikes >= 3) {
+      tqGridStrikeOut();
+    }
+  }
+}
+
+function tqGridStrikeOut() {
+  const chord = tqState.currentChord;
+  const cells = document.querySelectorAll('.tq-note-grid .tq-grid-cell');
+
+  // Reveal correct answers
+  cells.forEach(cell => {
+    const noteIdx = parseInt(cell.dataset.note);
+    if ((noteIdx === chord.root || noteIdx === chord.thirdNote || noteIdx === chord.fifthNote) && !cell.classList.contains('correct')) {
+      cell.classList.add('revealed');
+    }
+    cell.style.pointerEvents = 'none';
+  });
+
+  // Reset after delay
+  setTimeout(() => {
+    tqState.foundRoot = false;
+    tqState.foundThird = false;
+    tqState.foundFifth = false;
+    tqState.strikes = 0;
+    tqRender();
+    tqUpdateStrikesDisplay();
+  }, 1500);
+}
+
 function tqUpdateFindAllCount() {
   const el = document.getElementById('tq-find-all-count');
   if (!el) return;
-  if (tqState.findAll && tqState.active) {
+  if ((tqState.findAll || tqState.gridMode) && tqState.active) {
     const found = tqState.totalDots - tqState.remainingDots;
     document.getElementById('tq-find-all-value').textContent = `${found} / ${tqState.totalDots}`;
     el.style.display = '';
@@ -434,9 +541,10 @@ function tqHandleDotTap(noteIndex, group) {
     text.setAttribute('fill', '#fca5a5');
     setTimeout(() => {
       if (!group.classList.contains('correct')) {
-        circle.setAttribute('fill', '#1e1e35');
-        circle.setAttribute('stroke', '#333355');
-        text.setAttribute('fill', '#c0c0d8');
+        const hidden = tqState.hiddenMode;
+        circle.setAttribute('fill', hidden ? 'transparent' : '#1e1e35');
+        circle.setAttribute('stroke', hidden ? 'transparent' : '#333355');
+        text.setAttribute('fill', hidden ? 'transparent' : '#c0c0d8');
       }
     }, 400);
 
@@ -509,8 +617,10 @@ function tqCompleteRound() {
     strikes: tqState.strikes,
     tqChordQuality: chord.quality,
     tqChordRoot: chord.root,
-    tqFretRegion: `${tqState.fretMin}-${tqState.fretMax}`,
-    tqFindAll: tqState.findAll
+    tqFretRegion: tqState.gridMode ? 'grid' : `${tqState.fretMin}-${tqState.fretMax}`,
+    tqFindAll: tqState.findAll,
+    tqHidden: tqState.hiddenMode,
+    tqGrid: tqState.gridMode
   });
 
   // Auto-advance after short delay
@@ -565,10 +675,27 @@ function initTriadQuizUI() {
   const posSelect = document.getElementById('tq-position');
   const findAllBtn = document.getElementById('tq-find-all');
 
+  const hiddenBtn = document.getElementById('tq-hidden');
+  const gridBtn = document.getElementById('tq-grid');
+
   findAllBtn.addEventListener('click', () => {
     findAllBtn.blur();
     tqState.findAll = !tqState.findAll;
     findAllBtn.classList.toggle('active', tqState.findAll);
+  });
+
+  hiddenBtn.addEventListener('click', () => {
+    hiddenBtn.blur();
+    tqState.hiddenMode = !tqState.hiddenMode;
+    hiddenBtn.classList.toggle('active', tqState.hiddenMode);
+    if (tqState.active) tqRender();
+  });
+
+  gridBtn.addEventListener('click', () => {
+    gridBtn.blur();
+    tqState.gridMode = !tqState.gridMode;
+    gridBtn.classList.toggle('active', tqState.gridMode);
+    if (tqState.active) tqNewRound();
   });
 
   // Populate root note options

@@ -64,7 +64,8 @@ const FRET_REGION_LABELS = {
   '4-11': 'Frets 5–11',
   '8-15': 'Frets 9–15',
   '11-19': 'Frets 12–19',
-  '14-24': 'Frets 15+'
+  '14-24': 'Frets 15+',
+  'grid': 'Grid Mode'
 };
 
 function renderTriadDashboard() {
