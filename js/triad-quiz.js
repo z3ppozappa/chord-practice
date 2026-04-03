@@ -496,20 +496,11 @@ function tqHandleDotTap(noteIndex, group) {
 
   if (isChordTone) {
     if (tqState.findAll) {
-      // Find-all mode: mark the tapped dot, only count if it's a target
-      const isTarget = group.getAttribute('data-target') === 'true';
+      // Find-all mode: any chord tone tap counts toward completion
       tqMarkDotCorrect(group);
-      if (isTarget) {
+      if (tqState.remainingDots > 0) {
         tqState.remainingDots--;
         tqUpdateFindAllCount();
-      }
-
-      // Track per-note completion
-      const targetsStillNeeded = document.querySelectorAll(`#tq-fretboard .tq-dot[data-note="${noteIndex}"][data-target="true"]:not(.correct)`);
-      if (targetsStillNeeded.length === 0) {
-        if (noteIndex === chord.root) tqState.foundRoot = true;
-        if (noteIndex === chord.thirdNote) tqState.foundThird = true;
-        if (noteIndex === chord.fifthNote) tqState.foundFifth = true;
       }
 
       if (tqState.remainingDots <= 0) {
